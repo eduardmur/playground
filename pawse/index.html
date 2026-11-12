@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#1a2420" />
+    <title>Pawse</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23e39a4a'/><ellipse cx='32' cy='41' rx='13' ry='10' fill='%23fff3df'/><ellipse cx='14' cy='30' rx='5' ry='7' fill='%23fff3df'/><ellipse cx='25' cy='20' rx='5' ry='7' fill='%23fff3df'/><ellipse cx='39' cy='20' rx='5' ry='7' fill='%23fff3df'/><ellipse cx='50' cy='30' rx='5' ry='7' fill='%23fff3df'/></svg>" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <canvas id="scene" aria-label="A dog in a park"></canvas>
+    <div id="fade"><span>Pawse</span></div>
+
+    <main id="ui">
+      <!-- title -->
+      <section id="title" class="screen" hidden>
+        <header>
+          <h1>Pawse</h1>
+          <p class="tagline">a quiet day at the dog park</p>
+        </header>
+        <footer>
+          <div class="picker">
+            <button id="prevBreed" class="round" aria-label="Previous dog">‹</button>
+            <div class="breed">
+              <div id="breedName">Shiba Inu</div>
+              <div id="breedBlurb">Bright-eyed, fox-faced and a little bit stubborn.</div>
+            </div>
+            <button id="nextBreed" class="round" aria-label="Next dog">›</button>
+          </div>
+          <button id="begin" class="primary">Go for a walk</button>
+          <p class="keys"><b>WASD</b> walk · <b>Shift</b> run · <b>Space</b> jump · <b>E</b> sniff, greet, drink · <b>1–7</b> tricks · drag to look around</p>
+        </footer>
+      </section>
+
+      <!-- in play -->
+      <section id="hud" hidden>
+        <div class="corner tl">
+          <button id="timeBtn" class="pill" title="Let time drift ahead (T)">
+            <span id="timeIcon" class="ico">☼</span><span id="timeName">Golden hour</span><span class="ff">››</span>
+          </button>
+          <button id="holdBtn" class="pill icon" title="Hold this moment" aria-pressed="false">❚❚</button>
+        </div>
+        <div class="corner tr">
+          <button id="joyBtn" class="pill" title="Little joys (J)"><span class="ico">✿</span><span id="joyCount">0</span></button>
+          <button id="musicBtn" class="pill icon" title="Music (M)" aria-pressed="true">♪</button>
+          <button id="soundBtn" class="pill icon" title="Sound" aria-pressed="true">◖))</button>
+          <button id="photoBtn" class="pill icon" title="Hide the interface (P)">◎</button>
+          <button id="helpBtn" class="pill icon" title="How to play">?</button>
+        </div>
+
+        <div id="toasts" aria-live="polite"></div>
+
+        <div id="prompt"><kbd>E</kbd><span id="promptText"></span></div>
+
+        <div id="tricks">
+          <button data-key="Digit1"><kbd>1</kbd>Sit</button>
+          <button data-key="Digit2"><kbd>2</kbd>Down</button>
+          <button data-key="Digit3"><kbd>3</kbd>Roll</button>
+          <button data-key="Digit4"><kbd>4</kbd>Spin</button>
+          <button data-key="Digit5"><kbd>5</kbd>Paw</button>
+          <button data-key="Digit6"><kbd>6</kbd>Beg</button>
+          <button data-key="Digit7"><kbd>7</kbd>Bow</button>
+          <span class="sep"></span>
+          <button data-key="KeyF"><kbd>F</kbd>Bark</button>
+          <button data-key="KeyH"><kbd>H</kbd>Howl</button>
+          <button data-key="KeyR"><kbd>R</kbd>Shake</button>
+        </div>
+
+        <div id="stick"><div id="stickKnob"></div></div>
+        <div id="touchBtns">
+          <button data-key="Space">Jump</button>
+          <button data-key="KeyE" class="big">E</button>
+        </div>
+        <div id="photoHint">Press <kbd>P</kbd> to bring the interface back</div>
+      </section>
+
+      <!-- journal -->
+      <section id="journal" class="panel" hidden>
+        <div class="card">
+          <button class="close" data-close aria-label="Close">×</button>
+          <h2>Little joys</h2>
+          <p class="sub" id="journalSub">Nothing to win. Just things to notice.</p>
+          <div id="joyGrid"></div>
+          <div class="foot">
+            <span id="friendList"></span>
+            <button id="resetBtn" class="link">Start a fresh day</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- help -->
+      <section id="help" class="panel" hidden>
+        <div class="card narrow">
+          <button class="close" data-close aria-label="Close">×</button>
+          <h2>Being a dog</h2>
+          <p class="sub">There is nowhere you need to be.</p>
+          <dl>
+            <dt><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></dt><dd>Walk</dd>
+            <dt><kbd>Shift</kbd></dt><dd>Run</dd>
+            <dt><kbd>Space</kbd></dt><dd>Jump</dd>
+            <dt><kbd>E</kbd></dt><dd>Sniff, greet, drink, pick up, toss, dig</dd>
+            <dt><kbd>1</kbd>–<kbd>7</kbd></dt><dd>Sit · Down · Roll over · Spin · Paw · Beg · Play bow</dd>
+            <dt><kbd>F</kbd> <kbd>H</kbd> <kbd>R</kbd></dt><dd>Bark · Howl · Shake dry</dd>
+            <dt>Drag · Scroll</dt><dd>Look around · Zoom</dd>
+            <dt><kbd>T</kbd></dt><dd>Let time drift ahead</dd>
+            <dt><kbd>J</kbd> <kbd>P</kbd> <kbd>M</kbd></dt><dd>Little joys · Hide interface · Music</dd>
+          </dl>
+          <p class="tips">Play-bow to a dog to start a game of tag. Toss the ball near a friend. Lie down for a while and you will doze off. Stay until dark.</p>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
