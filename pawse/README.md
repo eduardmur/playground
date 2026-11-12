@@ -4,6 +4,13 @@ A quiet day at the dog park. You are a dog. There is nowhere you need to be.
 
 **Play it: https://eduardmur.github.io/playground/pawse/**
 
+![Two dogs sitting on the beach of the pond at sunset, under cherry trees](screenshots/1-sunset.jpg)
+
+| | |
+| --- | --- |
+| ![Four dogs playing in a meadow of wildflowers](screenshots/2-friends.jpg) | ![Two dogs howling by the fountain plaza at night, under street lamps](screenshots/3-night.jpg) |
+| Making friends in the meadow | Howling at night by the fountain |
+
 Built with [Three.js](https://threejs.org/). Everything on screen and everything you hear is generated in code: there are no models, textures or audio files.
 
 ## Run it

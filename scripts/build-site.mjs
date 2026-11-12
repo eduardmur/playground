@@ -6,6 +6,8 @@
 //   - with a package.json that has a "build" script: installed, built, and its dist/ published
 //   - with an index.html and no build step: published as it is
 //   - anything else: listed with a link to its code only
+// A cover image is taken from <project>/cover.(jpg|png|webp), or else the first file
+// (by name) in <project>/screenshots/.
 // Optional metadata lives in the project's package.json under "playground":
 //   { "title": "Pawse", "tags": ["game"], "date": "2026-11-12" }
 // The result goes to _site/, with an index page that lists every experiment.
@@ -43,6 +45,17 @@ async function readmeBlurb(dir) {
   }
 }
 
+const IMG = /\.(jpe?g|png|webp|gif)$/i;
+async function findCover(dir) {
+  for (const f of (await readdir(dir)).sort()) if (/^cover\./i.test(f) && IMG.test(f)) return join(dir, f);
+  const shots = join(dir, 'screenshots');
+  if (existsSync(shots)) {
+    const f = (await readdir(shots)).sort().find((x) => IMG.test(x));
+    if (f) return join(shots, f);
+  }
+  return null;
+}
+
 await rm(site, { recursive: true, force: true });
 await mkdir(site, { recursive: true });
 
@@ -62,7 +75,15 @@ for (const name of (await readdir(root)).sort()) {
     tags: meta.tags || [],
     date: meta.date || '',
     live: false,
+    cover: null,
   };
+  const cover = await findCover(dir);
+  if (cover) {
+    const ext = cover.slice(cover.lastIndexOf('.')).toLowerCase();
+    await mkdir(join(site, '_covers'), { recursive: true });
+    await cp(cover, join(site, '_covers', name + ext));
+    project.cover = `./_covers/${name}${ext}`;
+  }
 
   if (pkg?.scripts?.build) {
     console.log(`\n▸ ${name}: npm install + build`);
@@ -87,6 +108,7 @@ projects.sort((a, b) => (b.date || '').localeCompare(a.date || '') || a.title.lo
 
 const card = (p) => `
       <li class="item">
+        ${p.cover ? `${p.live ? `<a class="cover" href="./${esc(p.name)}/" tabindex="-1">` : '<span class="cover">'}<img src="${esc(p.cover)}" alt="" loading="lazy">${p.live ? '</a>' : '</span>'}` : ''}
         <div class="head">
           <h2>${p.live ? `<a href="./${esc(p.name)}/">${esc(p.title)}</a>` : esc(p.title)}</h2>
           ${p.date ? `<time datetime="${esc(p.date)}">${esc(p.date)}</time>` : ''}
@@ -108,6 +130,7 @@ const page = `<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Playground</title>
 <meta name="description" content="Small experiments: games, toys and prototypes.">
+${projects[0]?.cover ? `<meta property="og:image" content="https://${REPO.split('/')[0]}.github.io/${REPO.split('/')[1]}/${projects[0].cover.slice(2)}">` : ''}
 <style>
   :root {
     --bg: #f6f5f1; --fg: #1d211f; --muted: #66706a; --line: #dfddd5; --card: #ffffff; --accent: #2f7a52;
@@ -125,7 +148,11 @@ const page = `<!doctype html>
   h1 { margin: 0; font-size: 32px; letter-spacing: -0.02em; }
   header p { margin: 6px 0 0; color: var(--muted); }
   ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
-  .item { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; }
+  .item { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; overflow: hidden; }
+  .cover { display: block; margin: -18px -20px 16px; aspect-ratio: 16 / 9; background: var(--line); }
+  .cover img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .4s ease; }
+  a.cover:hover img { transform: scale(1.02); }
+  @media (prefers-reduced-motion: reduce) { .cover img { transition: none; } }
   .head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
   h2 { margin: 0; font-size: 19px; }
   h2 a { color: inherit; text-decoration: none; }
