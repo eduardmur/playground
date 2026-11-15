@@ -4,7 +4,7 @@
 //   node scripts/audio-tools.mjs build [sfx] [music] [voice]   takes/ -> public/audio/ (all three if none is named)
 //
 // takes/<kind>/index.json lists what has been recorded: [{ label, take, file }], where label is
-// "sfx/<id>", "music/<id>", "car/<id>" or "<rider>/<clip>/<n> <voice>". Where a label has several
+// "sfx/<id>", "music/<id>", "car/<id>" or "<rider>/<clip>". Where a label has several
 // takes the build picks one by measurement. takes/picks.json overrides it: { "<label>": <take> }, or
 // { "<label>": { "take": <take>, "keep": [[from, to], ...] } } to use only those stretches of the
 // take (in seconds), joined end to end: for a take with a gap in it, or one click too many. Two more
@@ -18,12 +18,12 @@
 //          to the game as `gain`. A sound whose manifest entry has `notes` is one recorded note
 //          played once per [seconds, semitones]: the model will not play a set number of notes.
 //   music  levelled to one loudness, with the silence trimmed from the end
-//   voice  each line is trimmed and levelled (peaks that stand in the way are held down, and a line
-//          far quieter than the rest of its voice is left a little quieter), the lines of a clip are
-//          joined with pauses between them, and the moment each line starts is noted for the subtitles
+//   voice  each clip is one line: trimmed and levelled (peaks that stand in the way are held down,
+//          and a line far quieter than the rest of its voice is left a little quieter)
 //
-// What the game needs to know about a recording goes to src/audio/recordings.json, with the
-// recording's length, so the notes are ignored if the file is later swapped for another.
+// What the game needs to know about a recording (the gain a bed is still owed) goes to
+// src/audio/recordings.json, with the recording's length, so the note is ignored if the file is
+// later swapped for another.
 //
 // Decoding and encoding go through afconvert, which ships with macOS.
 import { execFileSync } from 'node:child_process';
@@ -617,82 +617,55 @@ async function buildMusic(log) {
   }
 }
 
-/** Seconds of quiet between one line and the next. */
-function pause(prev, next, call) {
-  let s = prev.who !== next.who ? 0.32 : call ? 1.15 : 0.55; // a reply, the other end of a call, a new thought
-  if (/^\s*(\[[^\]]*\]\s*)*\.\.\./.test(next.text)) s += 0.4; // a line that opens on a hesitation
-  if (/\.\.\.\s*$/.test(prev.text)) s += 0.3; // or one that trails off
-  return s;
-}
-
 async function buildVoice(log) {
-  const { RIDERS, CAR_LINES } = await import(pathToFileURL(join(ROOT, 'src', 'data', 'riders.js')).href);
+  const { RIDERS, CAR_LINES, clipsOf } = await import(pathToFileURL(join(ROOT, 'src', 'data', 'riders.js')).href);
   const takes = takesOf('voice'), chosen = picks();
-  // every clip as a list of lines, each with the label its takes were recorded under
-  const clips = CAR_LINES.map((l) => ({ key: `voice/car/${l.id}`, call: false, lines: [{ who: 'nim', text: l.text, label: `car/${l.id}` }] }));
-  for (const r of RIDERS) {
-    for (const clip of ['hello', 'scene', 'bye']) {
-      clips.push({
-        key: `voice/${r.id}/${clip}`,
-        call: clip === 'scene' && r.party.some((p) => p.call),
-        lines: r[clip].map((l, i) => ({ who: l.who, text: l.text, label: `${r.id}/${clip}/${i + 1} ${l.who}` })),
-      });
-    }
-  }
-  const ready = clips.filter((c) => c.lines.every((l) => takes.has(l.label)));
+  // every clip is one line in one voice; `label` is what its takes were recorded under
+  const clips = CAR_LINES.map((l) => ({ key: `voice/car/${l.id}`, who: 'nim', label: `car/${l.id}` }));
+  for (const r of RIDERS) for (const [clip] of clipsOf(r)) clips.push({ key: `voice/${r.id}/${clip}`, who: r.id, label: `${r.id}/${clip}` });
+  const ready = clips.filter((c) => takes.has(c.label));
   // measure every take once; a voice's usual pitch is the middle of all its takes
   const pitches = new Map();
   for (const c of ready) {
-    for (const l of c.lines) {
-      l.cand = takes.get(l.label).map((t) => {
-        const a = decode(t.file);
-        return { ...t, a, pitch: voiceStats(a).pitchHz };
-      });
-      if (!pitches.has(l.who)) pitches.set(l.who, []);
-      pitches.get(l.who).push(...l.cand.map((x) => x.pitch).filter(Number.isFinite));
-    }
+    c.cand = takes.get(c.label).map((t) => {
+      const a = decode(t.file);
+      return { ...t, a, pitch: voiceStats(a).pitchHz };
+    });
+    if (!pitches.has(c.who)) pitches.set(c.who, []);
+    pitches.get(c.who).push(...c.cand.map((x) => x.pitch).filter(Number.isFinite));
   }
   const usual = new Map([...pitches].map(([who, list]) => [who, median(list)]));
   const off = (who, pitch) => (Number.isFinite(pitch) ? Math.abs(Math.log2(pitch / usual.get(who))) : 9);
-  const notes = readJson(NOTES, {});
   // of several takes, the one that sounds most like the rest of that voice; and what it would take to bring it to level
   const gains = new Map();
   for (const c of ready) {
-    for (const l of c.lines) {
-      l.pick = l.cand.find((x) => x.take === chosen[l.label]?.take) || [...l.cand].sort((p, q) => off(l.who, p.pitch) - off(l.who, q.pitch))[0];
-      l.body = trim(l.pick.a);
-      l.gain = SPEECH_LEVEL - loudness(l.body).active;
-      if (!gains.has(l.who)) gains.set(l.who, []);
-      gains.get(l.who).push(l.gain);
-    }
+    c.pick = c.cand.find((x) => x.take === chosen[c.label]?.take) || [...c.cand].sort((p, q) => off(c.who, p.pitch) - off(c.who, q.pitch))[0];
+    c.body = trim(c.pick.a);
+    c.gain = SPEECH_LEVEL - loudness(c.body).active;
+    if (!gains.has(c.who)) gains.set(c.who, []);
+    gains.get(c.who).push(c.gain);
   }
   const usualGain = new Map([...gains].map(([who, list]) => [who, median(list)]));
   for (const c of ready) {
-    const parts = [], at = [], said = [];
-    let t = 0.03;
-    c.lines.forEach((l, i) => {
-      // every line at the same loudness, give or take: one spoken under the breath stays a little under, and
-      // where a laugh or a hard consonant stands in the way, only that is held down
-      const g = Math.max(usualGain.get(l.who) - SPEECH_WINDOW, Math.min(usualGain.get(l.who) + SPEECH_WINDOW, l.gain));
-      const held = Math.max(0, db(peakOf(l.body)) + g - CEILING);
-      const out = limit(scaled(l.body, g));
-      if (i) t += pause(c.lines[i - 1], l, c.call);
-      at.push(round(t, 2));
-      parts.push({ at: t, a: out });
-      t += out.ch[0].length / RATE;
-      said.push(`${l.who} t${l.pick.take} ${signed(g)}${Math.abs(g - l.gain) > 0.5 ? ` (${round(Math.abs(g - l.gain), 1)} ${g < l.gain ? 'under' : 'over'})` : ''}${held > 0.5 ? ` (peaks held ${round(held, 1)})` : ''}`);
-    });
-    const total = Math.round((t + 0.05) * RATE), mix = new Float32Array(total);
-    for (const p of parts) mix.set(mono(p.a), Math.round(p.at * RATE));
+    // every line at the same loudness, give or take: one spoken under the breath stays a little under, and
+    // where a laugh or a hard consonant stands in the way, only that is held down
+    const g = Math.max(usualGain.get(c.who) - SPEECH_WINDOW, Math.min(usualGain.get(c.who) + SPEECH_WINDOW, c.gain));
+    const held = Math.max(0, db(peakOf(c.body)) + g - CEILING);
+    const out = mono(limit(scaled(c.body, g)));
+    // a moment of quiet at each end, so nothing starts or stops on a click
+    const lead = Math.round(0.03 * RATE), mix = new Float32Array(lead + out.length + Math.round(0.05 * RATE));
+    mix.set(out, lead);
     encode({ rate: RATE, ch: [mix] }, join(PUBLIC, `${c.key}.m4a`), 96000);
-    if (c.lines.length > 1) notes[c.key] = { seconds: round(total / RATE, 2), at };
-    else delete notes[c.key];
-    log(`${c.key}  ${round(total / RATE, 2)} s  ${said.join(', ')}`);
+    log(`${c.key}  ${round(mix.length / RATE, 2)} s  take ${c.pick.take} of ${c.cand.length}  gain ${signed(g)} dB` +
+      (Math.abs(g - c.gain) > 0.5 ? `  (${round(Math.abs(g - c.gain), 1)} dB ${g < c.gain ? 'under' : 'over'} the rest)` : '') + (held > 0.5 ? `  (peaks held ${round(held, 1)} dB)` : ''));
   }
+  // a spoken clip needs nothing noted about it: clear what a build of longer clips left behind
+  const notes = readJson(NOTES, {});
+  for (const k of Object.keys(notes)) if (k.startsWith('voice/')) delete notes[k];
   writeNotes(notes);
   log(`usual pitch: ${[...usual].map(([who, hz]) => `${who} ${hz} Hz`).join(', ')}`);
   const waiting = clips.length - ready.length;
-  if (waiting) log(`${waiting} clips still have lines with no take`);
+  if (waiting) log(`${waiting} clips have no take yet`);
 }
 
 // ------------------------------------------------------------------ command line

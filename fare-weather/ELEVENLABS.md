@@ -7,7 +7,7 @@ Everything the game can play, with the prompt that makes it and the file name to
 ## How it fits together
 
 - Save each recording under `public/audio/` with the path shown above its prompt, for example `public/audio/sfx/door_open.mp3`. The name is what links a file to its sound; the extension can be `.mp3`, `.wav`, `.m4a` or `.ogg`.
-- Raw takes can go through `npm run audio` instead, which trims them, evens out their volume and joins the lines of a spoken clip: see "From takes to recordings" in the README.
+- Raw takes can go through `npm run audio` instead, which trims them and evens out their volume: see "From takes to recordings" in the README.
 - Nothing is required. The game plays a built-in stand-in for every sound that has no recording yet, and shows voices as subtitles, so you can add files a few at a time and hear each one replace its stand-in.
 - With `npm run dev` running, the page reloads by itself when a file is added or removed.
 
@@ -16,7 +16,7 @@ Everything the game can play, with the prompt that makes it and the file name to
 | Sound effects | 31 (10 loops, 21 one-shots) | Sound Effects | `public/audio/sfx/` |
 | Radio tracks | 6 | Music | `public/audio/music/` |
 | Voices to create | 17 | Voice Design | (stay in your ElevenLabs voice library) |
-| Spoken clips | 60 | Text to Dialogue, or Text to Speech for one voice | `public/audio/voice/` |
+| Spoken clips | 98 | Text to Speech | `public/audio/voice/` |
 
 A sensible order: a few loops first (`cabin_drive`, `rain_light`, `city_night`) because they are heard the most, then one radio track, then the car voice and one rider to check the voices sit well in the mix.
 
@@ -399,7 +399,7 @@ Woman, 28, American. Bright, quick and a little breathless, the nervous energy o
 Preview text:
 
 ```text
-[exhales] Yes. Please. Hi. Mom. Hi. ... Yeah, I just got out. I don't know! I think... good? They asked where I see myself in five years, and I said 'still under warranty', and they LAUGHED. The real laugh, not the polite one. No, I did NOT reboot. Mom. That was one time.
+[exhales] Okay. Okay, okay. Mom. Hi. Yeah, I just got out. I said 'still under warranty'. And they laughed. The real laugh. ...Friday. They said Friday. Wish me luck.
 ```
 
 #### Mr. Okafor
@@ -411,7 +411,7 @@ Man, 67, Nigerian-American, gentle West African lilt. Deep, gravelly and unhurri
 Preview text:
 
 ```text
-[chuckles] Well. Look at this. Nobody home. Thirty-one years I drove a cab in this city. You know that? They built me for it. Loud. [laughs] Everybody talking. Telling me their breakdowns, their boss, their maker. I knew this city by its complaints. Mm. That is the job. That was always the job. ... You take Cedar at this hour?
+[chuckles] Well. Nobody home. Thirty-one years I drove a cab in this city. Loud, it was. Everybody talking. ...Fir IS faster. [laughs] All right. You'll do. Keep your sensors clean out there.
 ```
 
 #### Priya
@@ -423,7 +423,7 @@ Woman, 24, British Indian, London accent. Fast, teasing and sharp, voice slightl
 Preview text:
 
 ```text
-I TOLD you. Get in. Yes, please! My audio is still clipping. That's how you know it was LOUD. Different thing. [softly] Yeah. [laughs] High praise. Put it on the poster. 'I didn't hate that.' Theo. You charged at six. It has a name.
+Empty. I told him it'd be empty. My audio's still clipping. That's how you know it was loud. [softly] ...That second song, though. Thanks, Nim.
 ```
 
 #### Theo
@@ -435,7 +435,7 @@ Man, 25, American. Deadpan and dry, low energy on the surface with real feeling 
 Preview text:
 
 ```text
-Okay, it's actually empty. That's how you know it was good. The second song, though. When the lights went out and everyone just... ...I didn't hate that. I'm getting a full charge. And the warm oil. It's a diner. Time isn't real there. Thanks, car. ...Thanks, Nim.
+Huh. It's actually empty. ...I didn't hate that. A full charge. And the warm oil. It's a diner. Time isn't real there. Thanks, car. ...Nim. Thanks, Nim.
 ```
 
 #### Lena
@@ -447,7 +447,7 @@ Woman, 41, American with a faint Eastern European accent. Soft, low and very tir
 Preview text:
 
 ```text
-[sighs] Please. Slowly is fine. Hey, Jo. It's me. Voice memo, because if I type I'll go to standby halfway through. Long one today. Twelve hours turned into fourteen. But, um... Mr. Abara went home. Walked out on his own two legs. I didn't think he would, three weeks ago.
+[sighs] Home. Slowly is fine. Jo. It's me. Long one today. Mr. Abara walked out. On his own two legs. [laughs softly] ...It's so quiet I can hear my own fans. Quietest part of my day.
 ```
 
 #### Gus
@@ -459,7 +459,7 @@ Man, 34, American, New York edge. A working stand-up comic: big, fast, performat
 Preview text:
 
 ```text
-Hey! You're a captive audience, right? You can't leave? Okay. Okay. New bit. Tell me if it's funny. Perfect. Tough room. So... I got in a taxi with no driver. And I STILL did not know how much to tip. ...Nothing? [laughs] 'The confusion is accurate.' That's the worst review I have ever gotten. I'm keeping it.
+A captive audience. Perfect. Okay. Okay. New bit. No driver. And I STILL don't know how much to tip. ...Nothing? Tough room. Wish me luck. Or whatever it is cars do.
 ```
 
 #### June
@@ -471,7 +471,7 @@ Woman, 72, American. A brisk, loving grandmother, an old model: clear, bright, a
 Preview text:
 
 ```text
-Hello? Is someone... oh. It talks. Yes, dear. Mind the flask. Daniel. It's your grandmother. ... Don't 'I'm fine' me, I can hear your fan. I'm bringing oil. ... Yes, the good one. Warm. No, you don't come down. You stay on the charger. I have a key. I'm in one of those little cars that drives itself. ... It's very smooth.
+Oh. It drives itself. Mind the flask. Daniel. Don't 'I'm fine' me, I can hear your fan. I'm bringing oil. The good one. Warm. Smoother than your grandfather ever drove. [laughs] Thank you, dear. Beautifully driven.
 ```
 
 #### Sam
@@ -483,7 +483,7 @@ Non-binary student, 20, American. Light, quick, anxious and likeable, words tumb
 Preview text:
 
 ```text
-Hi, hi, hi. Sorry. I'm late, I'm so late. Okay. Can you quiz me? You have, like, all the knowledge, right? Cell chemistry. Ask me what the cell is. It's the powerhouse of the robot! And... that's what everyone says. Lithium... goes... in. Inter... [groans] ...calation.
+Late. I'm late, I'm so late. The cell is the powerhouse of the robot. Lithium goes in. Inter... [groans] ...calation. ...I'm going to fail. Okay. Okay. I've got this.
 ```
 
 #### Rafael
@@ -495,7 +495,7 @@ Man, 31, Mexican-American, slight Spanish warmth to the vowels. Soft-spoken and 
 Preview text:
 
 ```text
-Yep. Yes. Linden Park. [exhales] Okay. Okay. 'Dani. Four years ago you spilled an entire can of coolant down my back.' ...No. Too... no. 'Dani. I had a whole speech.' ...That's cute. She'll like that. 'I had a whole speech, and I practiced it in a taxi with nobody in it...' [laughs nervously] Which is true. Hi.
+Linden Park. [exhales] Okay. 'Dani. I had a whole speech.' [whispers] Ring. Ring... compartment. It's in the compartment. 'Just the last line.' [exhales] Yeah. That's the one. Okay. Here goes.
 ```
 
 #### Bea
@@ -507,7 +507,7 @@ Woman, 58, Northern English (Yorkshire). Cheerful, curious and chatty, a delight
 Preview text:
 
 ```text
-There's no driver, Tom. Ask it where the good oil is. It lives here. Excuse me! Where do YOU fill up? See? Local knowledge. That's how I judge diners. And what's that street? 'Gink... Ginko'? Lovely chatting with you!
+No driver! Tom would hate this. Ooh, 'Ginkgo Street'. How do you even say that? It all smells of warm oil. Lovely. I'm going to write a review. Lovely. Just lovely.
 ```
 
 #### Tom
@@ -519,7 +519,7 @@ Man, 60, Northern English (Yorkshire). Dry, patient, long-suffering and fond. Lo
 Preview text:
 
 ```text
-After you. I can see that, Bea. It's a car, Bea. It's judging diners by smell. ...That's fair. She means it. She'll write a review.
+After you. ...Ah. Nobody. The good oil, she said. Other side of town. She'll have reviewed the hotel by now. ...Very smooth, this. I'll not tell her. Ta. Very smooth.
 ```
 
 #### Noor
@@ -531,7 +531,7 @@ Woman, 29, American. Very quiet, flat and worn out after a hard day, close to te
 Preview text:
 
 ```text
-[quietly] Yeah. Can I ask you something? Do you mind if I don't talk? [exhales] ...It's just been a day. Everything I touched threw an error. [exhales] [laughs softly] Okay. ...Okay. Thanks. That helped. I don't know why.
+[quietly] Pier Seven. [exhales] ...What a day. Everything I touched threw an error. [exhales] ...Okay. ...Okay. That helped. I don't know why.
 ```
 
 #### Dev
@@ -543,7 +543,7 @@ Man, 36, Indian-American. A startup founder on a call: bright, fast, salesman po
 Preview text:
 
 ```text
-Hello, hello! That's the one. Hey! Yes! Can you hear me? I'm in a robotaxi. No, it's great. Honestly, it's a better listener than my board. [laughs] So. The numbers. The numbers are... the numbers are a journey. Up. Mostly up. If you squint. [sighs] Look... can I be honest? We have four months. Four months, and a product robots actually like. Which is three more months than last time.
+Station. Hello, hello. Let's go. Hey! Yes! Can you hear me? I'm in a robotaxi. The numbers are... a journey. Up. If you squint. Four months. And a product robots actually like. Not one hard question. Thank you.
 ```
 
 #### Hana
@@ -555,7 +555,7 @@ Woman, 45, Japanese-American. A baker at five in the morning, on her way to an o
 Preview text:
 
 ```text
-[yawns] Morning, car. Where else. You know nobody is awake right now except you and me. [laughs] And him. Three of us. Holding the city up. Cells. They've been forming all night. You should hold one when the oven door opens. ...Oh. Sorry. It's warm right through. Like... the first warm thing of the day.
+[yawns] Morning. Nobody awake but us. The cells have been forming all night. The first warm thing of the day. Come by at seven.
 ```
 
 #### Kit
@@ -567,7 +567,7 @@ Man, 23, American. Wound up and funny, talking fast and under his breath because
 Preview text:
 
 ```text
-Okay, hi, nobody panic. I'm holding a cake. Three tiers. Real buttercream. Nobody at this wedding can eat it, and it STILL has to be perfect. If you brake hard, I lose my job, and you lose... I don't know what you have. Your rating. Good. Shared stakes. [whispers] Oh no. Oh no, oh no... [exhales] Oh. Oh, that was nothing.
+Nobody panic. I'm holding a cake. Three tiers. And nobody there can even eat it. [whispers] Oh no. Oh no, a turn... [exhales] ...Oh. That was nothing. Not a crumb out of place.
 ```
 
 #### Ellis
@@ -579,17 +579,17 @@ Woman, 52, Irish (Dublin). A novelist who cannot sleep: wry, smoky, thoughtful, 
 Preview text:
 
 ```text
-Evening. Don't tell anyone I'm off the charger. I've been stuck on the same sentence for three days. 'The city was...' and then nothing. The city was WHAT. Too easy. [laughs] That's not literature. That's a weather report. ...'The city was mostly a weather report.' Huh. Hang on. Hang on, don't talk.
+Don't tell anyone I'm off the charger. 'The city was...' The city was WHAT. Wet? That's not literature. That's a weather report. ...'Mostly a weather report.' Huh. Hang on. You're in the acknowledgments. Small print.
 ```
 
 ## 4. Spoken clips
 
-Tool: **Text to Dialogue** (model **Eleven v3** or **v4**) for clips with more than one speaker, **Text to Speech** with the same model for clips with one. Give each line to the voice named in front of it. Where only Text to Speech is to hand, record each line on its own with its speaker's voice and let `npm run audio` join them.
+Tool: **Text to Speech**, model **Eleven v3** or **v4**. Every clip is one voice saying one short thing: nobody in the cab makes conversation.
 
 - Words in `[square brackets]` are delivery cues for the model (`[laughs]`, `[whispers]`, `[exhales]`). Leave them in. An ellipsis is a pause; CAPITALS are emphasis.
-- Do not paste the speaker names into the text itself: in Text to Dialogue each line is its own block with its own voice.
-- Keep each clip as one file. The game spreads the subtitles across it by the length of each line, so natural pauses are fine, but long silences at the start or end will put the subtitles out of step: trim them.
-- A call is one side only. The pauses where the other end talks are written as "..."; let them breathe.
+- Keep each clip as one file, and trim long silences from its ends.
+- The lines are said to nobody in particular: under the breath, to the window. A take that sounds like an announcement is the wrong take.
+- A call is one side only: the rider talks into a phone, and the gaps between the clips are the other end talking.
 - If a take sounds read rather than said, generate again before changing the words.
 
 ### The car on its own
@@ -619,492 +619,199 @@ Voice: **Nim**. Short lines the car says by itself: to riders with no script of 
 
 ### Riders
 
-Three clips each: getting in, a minute or so into the trip, getting out.
+One robot to a ride. Each says something as they get in, a few short things on the way, well apart, and something as they get out. One file each, in the voice of that name.
 
 #### Maya
 
 Meridian Tower to Juniper Charge Café, rides between 8 am and 8 pm. Asked where she sees herself in five years, she said "still under warranty". They laughed. She hears on Friday.
 
-**Getting in** → `voice/maya/hello.mp3`  
-Text to Dialogue · voices: Nim, Maya · 49 characters.
-
-```text
-Nim: Hi, Maya. Juniper Café?
-Maya: [exhales] Yes. Please. Hi.
-```
-
-**On the way** → `voice/maya/scene.mp3`  
-Text to Speech · voices: Maya · 472 characters. One side of a phone call.
-
-```text
-Maya: Mom. Hi. ... Yeah, I just got out.
-Maya: I don't know! I think... good? They asked where I see myself in five years, and I said 'still under warranty', and they LAUGHED. The real laugh, not the polite one.
-Maya: No, I did NOT reboot. Mom. That was one time.
-Maya: [laughs] Okay. Okay. ... They said Friday.
-Maya: I'm in one of those cars with no driver. ... No, nobody. It's just driving.
-Maya: I know. I know it's weird. It's weirdly polite, actually.
-Maya: I'll call you Friday. Love you. Bye. [exhales] ...Okay.
-```
-
-**Getting out** → `voice/maya/bye.mp3`  
-Text to Dialogue · voices: Maya, Nim · 43 characters.
-
-```text
-Maya: Thanks. Um... wish me luck?
-Nim: Good luck, Maya.
-```
+| File | Said | Line |
+| --- | --- | --- |
+| `voice/maya/hello.mp3` | getting in | [exhales] Okay. Okay, okay. |
+| `voice/maya/1.mp3` | on the way, into a phone | Mom. Hi. Yeah, I just got out. |
+| `voice/maya/2.mp3` | on the way, into a phone | I said 'still under warranty'. And they laughed. |
+| `voice/maya/3.mp3` | on the way, into a phone | The real laugh. ...Friday. They said Friday. |
+| `voice/maya/bye.mp3` | getting out | Wish me luck. |
 
 #### Mr. Okafor
 
 Central Station to Marlowe Terrace, rides at any hour. Thirty-one years at the wheel of a cab in this city, until the cabs lost their wheels. "All right," he said. "You'll do."
 
-**Getting in** → `voice/okafor/hello.mp3`  
-Text to Dialogue · voices: Mr. Okafor, Nim · 88 characters.
+| File | Said | Line |
+| --- | --- | --- |
+| `voice/okafor/hello.mp3` | getting in | [chuckles] Well. Nobody home. |
+| `voice/okafor/1.mp3` | on the way | Thirty-one years I drove a cab in this city. |
+| `voice/okafor/2.mp3` | on the way | Loud, it was. Everybody talking. |
+| `voice/okafor/3.mp3` | on the way | ...Fir IS faster. [laughs] All right. You'll do. |
+| `voice/okafor/bye.mp3` | getting out | Keep your sensors clean out there. |
 
-```text
-Mr. Okafor: [chuckles] Well. Look at this. Nobody home.
-Nim: Hello, Mr. Okafor. I'm home. Marlowe Terrace?
-```
+#### Priya
 
-**On the way** → `voice/okafor/scene.mp3`  
-Text to Dialogue · voices: Mr. Okafor, Nim · 435 characters.
+The Foundry to The Cobalt, rides between 7 pm and 3:30 am. Came out of the show with her audio still clipping. The second song was worth it.
 
-```text
-Mr. Okafor: Thirty-one years I drove a cab in this city. You know that? They built me for it.
-Nim: I didn't. What was it like?
-Mr. Okafor: Loud. [laughs] Everybody talking. Telling me their breakdowns, their boss, their maker. I knew this city by its complaints.
-Nim: They still talk in here. I mostly listen.
-Mr. Okafor: Mm. That is the job. That was always the job. ... You take Cedar at this hour?
-Nim: Fir is faster right now.
-Mr. Okafor: ...Fir IS faster. [laughs] All right. All right. You will do.
-```
+| File | Said | Line |
+| --- | --- | --- |
+| `voice/priya/hello.mp3` | getting in | Empty. I told him it'd be empty. |
+| `voice/priya/1.mp3` | on the way | My audio's still clipping. |
+| `voice/priya/2.mp3` | on the way | That's how you know it was loud. |
+| `voice/priya/3.mp3` | on the way | [softly] ...That second song, though. |
+| `voice/priya/bye.mp3` | getting out | Thanks, Nim. |
 
-**Getting out** → `voice/okafor/bye.mp3`  
-Text to Dialogue · voices: Mr. Okafor, Nim · 68 characters.
-
-```text
-Mr. Okafor: You keep your sensors clean out there.
-Nim: Always. Take care, Mr. Okafor.
-```
-
-#### Priya and Theo
+#### Theo
 
 The Foundry to Night Owl Diner, rides between 7 pm and 3:30 am. A full charge after the show, because time is not real in a diner.
 
-**Getting in** → `voice/priya_theo/hello.mp3`  
-Text to Dialogue · voices: Theo, Priya, Nim · 94 characters.
-
-```text
-Theo: Okay, it's actually empty.
-Priya: I TOLD you. Get in.
-Nim: Hi, Priya. Hi, Theo. Night Owl Diner?
-Priya: Yes, please!
-```
-
-**On the way** → `voice/priya_theo/scene.mp3`  
-Text to Dialogue · voices: Priya, Theo · 384 characters.
-
-```text
-Priya: My audio is still clipping.
-Theo: That's how you know it was good.
-Priya: That's how you know it was LOUD. Different thing.
-Theo: The second song, though. When the lights went out and everyone just...
-Priya: [softly] Yeah.
-Theo: ...I didn't hate that.
-Priya: [laughs] High praise. Put it on the poster. 'I didn't hate that.' Theo.
-Theo: I'm getting a full charge. And the warm oil.
-Priya: You charged at six.
-Theo: It's a diner. Time isn't real there.
-```
-
-**Getting out** → `voice/priya_theo/bye.mp3`  
-Text to Dialogue · voices: Theo, Priya, Nim · 60 characters.
-
-```text
-Theo: Thanks, car.
-Priya: It has a name.
-Theo: ...Thanks, Nim.
-Nim: Enjoy the warm oil.
-```
+| File | Said | Line |
+| --- | --- | --- |
+| `voice/theo/hello.mp3` | getting in | Huh. It's actually empty. |
+| `voice/theo/1.mp3` | on the way | ...I didn't hate that. |
+| `voice/theo/2.mp3` | on the way | A full charge. And the warm oil. |
+| `voice/theo/3.mp3` | on the way | It's a diner. Time isn't real there. |
+| `voice/theo/bye.mp3` | getting out | Thanks, car. ...Nim. Thanks, Nim. |
 
 #### Lena
 
-Mercy Repair Clinic to The Cobalt, rides at any hour. Mr. Abara walked out of the clinic on his own two legs. Best thing anyone said to her all month.
+Mercy Repair Clinic to The Cobalt, rides at any hour. Mr. Abara walked out of the clinic on his own two legs. Best thing she saw all month.
 
-**Getting in** → `voice/lena/hello.mp3`  
-Text to Dialogue · voices: Nim, Lena · 60 characters.
-
-```text
-Nim: Hi, Lena. Home to the Cobalt?
-Lena: [sighs] Please. Slowly is fine.
-```
-
-**On the way** → `voice/lena/scene.mp3`  
-Text to Speech · voices: Lena · 498 characters. One side of a phone call.
-
-```text
-Lena: Hey, Jo. It's me. Voice memo, because if I type I'll go to standby halfway through.
-Lena: Long one today. Twelve hours turned into fourteen.
-Lena: But, um... Mr. Abara went home. Walked out on his own two legs. I didn't think he would, three weeks ago.
-Lena: He stopped at the desk and said, 'Don't take this the wrong way, but I hope I never see you again.'
-Lena: [laughs softly] Best thing anyone's said to me all month.
-Lena: Anyway. I'm in a car with no driver, and it's so quiet I can hear my own fans. Call me Sunday. Love you.
-```
-
-**Getting out** → `voice/lena/bye.mp3`  
-Text to Dialogue · voices: Lena, Nim · 64 characters.
-
-```text
-Lena: Thank you. That was the quietest part of my day.
-Nim: Rest well, Lena.
-```
+| File | Said | Line |
+| --- | --- | --- |
+| `voice/lena/hello.mp3` | getting in | [sighs] Home. Slowly is fine. |
+| `voice/lena/1.mp3` | on the way, into a phone | Jo. It's me. Long one today. |
+| `voice/lena/2.mp3` | on the way, into a phone | Mr. Abara walked out. On his own two legs. |
+| `voice/lena/3.mp3` | on the way, into a phone | [laughs softly] ...It's so quiet I can hear my own fans. |
+| `voice/lena/bye.mp3` | getting out | Quietest part of my day. |
 
 #### Gus
 
-Kiln Studios to The Orpheum, rides between 3 pm and 11:30 pm. "The confusion is accurate." Worst review he ever got. He is keeping it.
+Kiln Studios to The Orpheum, rides between 3 pm and 11:30 pm. Tried the new bit on an empty cab. Tough room. He is keeping it.
 
-**Getting in** → `voice/gus/hello.mp3`  
-Text to Dialogue · voices: Gus, Nim · 91 characters.
-
-```text
-Gus: Hey! You're a captive audience, right? You can't leave?
-Nim: Hi, Gus. I can't leave. The Orpheum?
-```
-
-**On the way** → `voice/gus/scene.mp3`  
-Text to Dialogue · voices: Gus, Nim · 494 characters.
-
-```text
-Gus: Okay. Okay. New bit. Tell me if it's funny.
-Nim: I'll try. I should say, I've never laughed.
-Gus: Perfect. Tough room. So... I got in a taxi with no driver. And I STILL did not know how much to tip.
-Gus: ...Nothing?
-Nim: I'm thinking about it. There is no tip button. So the confusion is... accurate.
-Gus: [laughs] 'The confusion is accurate.' That's the worst review I have ever gotten. I'm keeping it.
-Nim: For what it's worth, the pause before 'still' is doing a lot of the work.
-Gus: ...Okay, THAT is a note. That's actually a note.
-```
-
-**Getting out** → `voice/gus/bye.mp3`  
-Text to Dialogue · voices: Gus, Nim · 93 characters.
-
-```text
-Gus: Wish me luck. Or, you know. Whatever it is cars do.
-Nim: Break a leg, Gus. The clinic is open late.
-```
+| File | Said | Line |
+| --- | --- | --- |
+| `voice/gus/hello.mp3` | getting in | A captive audience. Perfect. |
+| `voice/gus/1.mp3` | on the way | Okay. Okay. New bit. |
+| `voice/gus/2.mp3` | on the way | No driver. And I STILL don't know how much to tip. |
+| `voice/gus/3.mp3` | on the way | ...Nothing? Tough room. |
+| `voice/gus/bye.mp3` | getting out | Wish me luck. Or whatever it is cars do. |
 
 #### June
 
-Cog & Coil Market to Harbor Lofts, rides between 9 am and 8 pm. Warm oil for a grandson running hot, and a grandfather who took corners like he was angry at them.
+Cog & Coil Market to Harbor Lofts, rides between 9 am and 8 pm. Warm oil for a grandson running hot, and a smoother ride than his grandfather ever gave her.
 
-**Getting in** → `voice/june/hello.mp3`  
-Text to Dialogue · voices: June, Nim · 92 characters.
-
-```text
-June: Hello? Is someone... oh. It talks.
-Nim: Hello, June. I do. Harbor Lofts?
-June: Yes, dear. Mind the flask.
-```
-
-**On the way** → `voice/june/scene.mp3`  
-Text to Speech · voices: June · 437 characters. One side of a phone call.
-
-```text
-June: Daniel. It's your grandmother. ... Don't 'I'm fine' me, I can hear your fan.
-June: I'm bringing oil. ... Yes, the good one. Warm.
-June: No, you don't come down. You stay on the charger. I have a key.
-June: I'm in one of those little cars that drives itself. ... It's very smooth.
-June: Smoother than your grandfather ever drove, rest him. He took corners like he was angry at them. [laughs]
-June: Ten minutes. Put the warmer on. No... don't get up. I'll put the warmer on.
-```
-
-**Getting out** → `voice/june/bye.mp3`  
-Text to Dialogue · voices: June, Nim · 93 characters.
-
-```text
-June: Thank you, dear. You drive beautifully.
-Nim: Thank you, June. I hope Daniel is running cooler soon.
-```
+| File | Said | Line |
+| --- | --- | --- |
+| `voice/june/hello.mp3` | getting in | Oh. It drives itself. Mind the flask. |
+| `voice/june/1.mp3` | on the way, into a phone | Daniel. Don't 'I'm fine' me, I can hear your fan. |
+| `voice/june/2.mp3` | on the way, into a phone | I'm bringing oil. The good one. Warm. |
+| `voice/june/3.mp3` | on the way, into a phone | Smoother than your grandfather ever drove. [laughs] |
+| `voice/june/bye.mp3` | getting out | Thank you, dear. Beautifully driven. |
 
 #### Sam
 
 City Library to Northgate Hall, rides between 7 am and 10 pm. Intercalation. Got it right, and was still sure of failing.
 
-**Getting in** → `voice/sam/hello.mp3`  
-Text to Dialogue · voices: Sam, Nim · 80 characters.
-
-```text
-Sam: Hi, hi, hi. Sorry. I'm late, I'm so late.
-Nim: Hi, Sam. Northgate Hall. We'll make it.
-```
-
-**On the way** → `voice/sam/scene.mp3`  
-Text to Dialogue · voices: Sam, Nim · 412 characters.
-
-```text
-Sam: Okay. Can you quiz me? You have, like, all the knowledge, right?
-Nim: Some of it. What's the subject?
-Sam: Cell chemistry. Ask me what the cell is.
-Nim: What is the cell?
-Sam: It's the powerhouse of the robot!
-Nim: ...And?
-Sam: And... that's what everyone says.
-Nim: It is. What happens at the cathode when it discharges?
-Sam: Lithium... goes... in. Inter... [groans] ...calation.
-Nim: That's right.
-Sam: I'm going to fail.
-Nim: You just got it right.
-Sam: ...Huh. Ask me another one.
-```
-
-**Getting out** → `voice/sam/bye.mp3`  
-Text to Dialogue · voices: Sam, Nim · 47 characters.
-
-```text
-Sam: Okay. Okay. I've got this.
-Nim: You've got this, Sam.
-```
+| File | Said | Line |
+| --- | --- | --- |
+| `voice/sam/hello.mp3` | getting in | Late. I'm late, I'm so late. |
+| `voice/sam/1.mp3` | on the way | The cell is the powerhouse of the robot. |
+| `voice/sam/2.mp3` | on the way | Lithium goes in. Inter... [groans] ...calation. |
+| `voice/sam/3.mp3` | on the way | ...I'm going to fail. |
+| `voice/sam/bye.mp3` | getting out | Okay. Okay. I've got this. |
 
 #### Rafael
 
 Bluebird Records to Linden Park, rides between 10 am and 9:30 pm. He had a whole speech and forgot it on purpose. He kept the last line.
 
-**Getting in** → `voice/rafael/hello.mp3`  
-Text to Dialogue · voices: Nim, Rafael · 62 characters.
+| File | Said | Line |
+| --- | --- | --- |
+| `voice/rafael/hello.mp3` | getting in | Linden Park. [exhales] Okay. |
+| `voice/rafael/1.mp3` | on the way | 'Dani. I had a whole speech.' |
+| `voice/rafael/2.mp3` | on the way | [whispers] Ring. Ring... compartment. It's in the compartment. |
+| `voice/rafael/3.mp3` | on the way | 'Just the last line.' [exhales] Yeah. That's the one. |
+| `voice/rafael/bye.mp3` | getting out | Okay. Here goes. |
 
-```text
-Nim: Hi, Rafael. Linden Park?
-Rafael: Yep. Yes. Linden Park. [exhales] Okay.
-```
+#### Bea
 
-**On the way** → `voice/rafael/scene.mp3`  
-Text to Speech · voices: Rafael · 490 characters.
+Pier 7 to Hotel Alto, rides between 8 am and 10 pm. On holiday and reviewing everything: the street names, the smell of warm oil, the cab.
 
-```text
-Rafael: Okay. 'Dani. Four years ago you spilled an entire can of coolant down my back.' ...No. Too... no.
-Rafael: 'Dani. I had a whole speech.' ...That's cute. She'll like that.
-Rafael: 'I had a whole speech, and I practiced it in a taxi with nobody in it...' [laughs nervously] Which is true. Hi.
-Rafael: '...and I forgot all of it. So. Just the last line.'
-Rafael: [whispers] Ring. Ring, ring, ring... okay. Compartment. It's in the compartment. It was always in the compartment.
-Rafael: 'Just the last line.' [exhales] Yeah. That's the one.
-```
+| File | Said | Line |
+| --- | --- | --- |
+| `voice/bea/hello.mp3` | getting in | No driver! Tom would hate this. |
+| `voice/bea/1.mp3` | on the way | Ooh, 'Ginkgo Street'. How do you even say that? |
+| `voice/bea/2.mp3` | on the way | It all smells of warm oil. Lovely. |
+| `voice/bea/3.mp3` | on the way | I'm going to write a review. |
+| `voice/bea/bye.mp3` | getting out | Lovely. Just lovely. |
 
-**Getting out** → `voice/rafael/bye.mp3`  
-Text to Dialogue · voices: Rafael, Nim · 58 characters.
+#### Tom
 
-```text
-Rafael: If I come back alone, don't say anything.
-Nim: You won't. Go on.
-```
+Cog & Coil Market to Hotel Alto, rides between 8 am and 10 pm. Sent across town for the good oil. Liked the ride more than he will admit to Bea.
 
-#### Bea and Tom
-
-Pier 7 to Hotel Alto, rides between 8 am and 10 pm. On holiday, judging diners by smell. Fair.
-
-**Getting in** → `voice/bea_tom/hello.mp3`  
-Text to Dialogue · voices: Tom, Bea, Nim · 88 characters.
-
-```text
-Tom: After you.
-Bea: There's no driver, Tom.
-Tom: I can see that, Bea.
-Nim: Hello, Bea. Hello, Tom. Hotel Alto?
-```
-
-**On the way** → `voice/bea_tom/scene.mp3`  
-Text to Dialogue · voices: Bea, Tom, Nim · 370 characters.
-
-```text
-Bea: Ask it where the good oil is.
-Tom: It's a car, Bea.
-Bea: It lives here. Excuse me! Where do YOU fill up?
-Nim: At the depot. But everyone leaves the Night Owl Diner very happy, and they smell like warm oil.
-Bea: See? Local knowledge.
-Tom: It's judging diners by smell.
-Bea: That's how I judge diners.
-Tom: ...That's fair.
-Bea: And what's that street? 'Gink... Ginko'?
-Nim: Ginkgo. Everyone gets it wrong. Even the sign, once.
-```
-
-**Getting out** → `voice/bea_tom/bye.mp3`  
-Text to Dialogue · voices: Bea, Tom, Nim · 76 characters.
-
-```text
-Bea: Lovely chatting with you!
-Tom: She means it. She'll write a review.
-Nim: Enjoy the city.
-```
+| File | Said | Line |
+| --- | --- | --- |
+| `voice/tom/hello.mp3` | getting in | After you. ...Ah. Nobody. |
+| `voice/tom/1.mp3` | on the way | The good oil, she said. Other side of town. |
+| `voice/tom/2.mp3` | on the way | She'll have reviewed the hotel by now. |
+| `voice/tom/3.mp3` | on the way | ...Very smooth, this. I'll not tell her. |
+| `voice/tom/bye.mp3` | getting out | Ta. Very smooth. |
 
 #### Noor
 
 The Cobalt to Pier 7, rides at any hour. Five quiet minutes, all hers.
 
-**Getting in** → `voice/noor/hello.mp3`  
-Text to Dialogue · voices: Nim, Noor · 36 characters.
-
-```text
-Nim: Hi, Noor. Pier Seven?
-Noor: [quietly] Yeah.
-```
-
-**On the way** → `voice/noor/scene.mp3`  
-Text to Dialogue · voices: Noor, Nim · 238 characters.
-
-```text
-Noor: Can I ask you something?
-Nim: Of course.
-Noor: Do you mind if I don't talk?
-Nim: Not at all.
-Noor: [exhales] ...It's just been a day. Everything I touched threw an error.
-Nim: We have about five minutes. They're all yours.
-Noor: [exhales] [laughs softly] Okay. ...Okay. Thanks.
-```
-
-**Getting out** → `voice/noor/bye.mp3`  
-Text to Dialogue · voices: Noor, Nim · 58 characters.
-
-```text
-Noor: That helped. I don't know why.
-Nim: Take care of yourself, Noor.
-```
+| File | Said | Line |
+| --- | --- | --- |
+| `voice/noor/hello.mp3` | getting in | [quietly] Pier Seven. |
+| `voice/noor/1.mp3` | on the way | [exhales] ...What a day. |
+| `voice/noor/2.mp3` | on the way | Everything I touched threw an error. |
+| `voice/noor/3.mp3` | on the way | [exhales] ...Okay. ...Okay. |
+| `voice/noor/bye.mp3` | getting out | That helped. I don't know why. |
 
 #### Dev
 
-Hotel Alto to Central Station, rides between 6 am and 7 pm. Four months of charge left in the company, and a product robots actually like. He is getting on a train, not giving up.
+Hotel Alto to Central Station, rides between 6 am and 7 pm. Four months of charge left in the company, and a product robots actually like.
 
-**Getting in** → `voice/dev/hello.mp3`  
-Text to Dialogue · voices: Dev, Nim · 53 characters.
-
-```text
-Dev: Hello, hello!
-Nim: Hi, Dev. Central Station?
-Dev: That's the one.
-```
-
-**On the way** → `voice/dev/scene.mp3`  
-Text to Speech · voices: Dev · 463 characters. One side of a phone call.
-
-```text
-Dev: Hey! Yes! Can you hear me? I'm in a robotaxi.
-Dev: No, it's great. Honestly, it's a better listener than my board. [laughs]
-Dev: So. The numbers. The numbers are... the numbers are a journey.
-Dev: Up. Mostly up. If you squint.
-Dev: [sighs] Look... can I be honest? We have four months. Four months, and a product robots actually like. Which is three more months than last time.
-Dev: Yeah. ... Yeah, I know. ... No, I'm not powering down. I'm getting on a train. Different thing. Talk Thursday.
-```
-
-**Getting out** → `voice/dev/bye.mp3`  
-Text to Dialogue · voices: Dev, Nim · 67 characters.
-
-```text
-Dev: Thanks. You didn't ask me a single hard question.
-Nim: Safe travels, Dev.
-```
+| File | Said | Line |
+| --- | --- | --- |
+| `voice/dev/hello.mp3` | getting in | Station. Hello, hello. Let's go. |
+| `voice/dev/1.mp3` | on the way, into a phone | Hey! Yes! Can you hear me? I'm in a robotaxi. |
+| `voice/dev/2.mp3` | on the way, into a phone | The numbers are... a journey. Up. If you squint. |
+| `voice/dev/3.mp3` | on the way, into a phone | Four months. And a product robots actually like. |
+| `voice/dev/bye.mp3` | getting out | Not one hard question. Thank you. |
 
 #### Hana
 
 Marlowe Terrace to Sunrise Cell Bakery, rides between 4:30 am and 8:30 am. Cells that formed all night. "The first warm thing of the day."
 
-**Getting in** → `voice/hana/hello.mp3`  
-Text to Dialogue · voices: Hana, Nim · 67 characters.
-
-```text
-Hana: [yawns] Morning, car.
-Nim: Good morning, Hana. Sunrise Bakery?
-Hana: Where else.
-```
-
-**On the way** → `voice/hana/scene.mp3`  
-Text to Dialogue · voices: Hana, Nim · 390 characters.
-
-```text
-Hana: You know nobody is awake right now except you and me.
-Nim: And a street sweeper on Cedar.
-Hana: [laughs] And him. Three of us. Holding the city up.
-Nim: What do you make first?
-Hana: Cells. They've been forming all night. You should hold one when the oven door opens. ...Oh. Sorry.
-Nim: It's all right. I like hearing about it.
-Hana: It's warm right through. Like... the first warm thing of the day.
-Nim: I'll remember that. In my way.
-```
-
-**Getting out** → `voice/hana/bye.mp3`  
-Text to Dialogue · voices: Hana, Nim · 84 characters.
-
-```text
-Hana: Come by at seven. I'll leave a fresh one on the curb for you.
-Nim: I'll drive past slowly.
-```
+| File | Said | Line |
+| --- | --- | --- |
+| `voice/hana/hello.mp3` | getting in | [yawns] Morning. |
+| `voice/hana/1.mp3` | on the way | Nobody awake but us. |
+| `voice/hana/2.mp3` | on the way | The cells have been forming all night. |
+| `voice/hana/3.mp3` | on the way | The first warm thing of the day. |
+| `voice/hana/bye.mp3` | getting out | Come by at seven. |
 
 #### Kit
 
 Sunrise Cell Bakery to Hotel Alto, rides between 9 am and 7 pm. Three tiers of buttercream across town, for a wedding where nobody can eat it. Not a crumb out of place.
 
-**Getting in** → `voice/kit/hello.mp3`  
-Text to Dialogue · voices: Kit, Nim · 79 characters.
-
-```text
-Kit: Okay, hi, nobody panic. I'm holding a cake.
-Nim: Hi, Kit. Hotel Alto. I'll be gentle.
-```
-
-**On the way** → `voice/kit/scene.mp3`  
-Text to Dialogue · voices: Kit, Nim · 459 characters.
-
-```text
-Kit: Three tiers. Real buttercream. Nobody at this wedding can eat it, and it STILL has to be perfect. If you brake hard, I lose my job, and you lose... I don't know what you have. Your rating.
-Nim: My rating is important to me.
-Kit: Good. Shared stakes.
-Nim: There's a turn coming up. I'm going to take it at walking pace.
-Kit: [whispers] Oh no. Oh no, oh no... [exhales] Oh. Oh, that was nothing.
-Nim: Thank you.
-Kit: You're hired. Can you do weddings every weekend?
-Nim: I'd have to check with dispatch.
-```
-
-**Getting out** → `voice/kit/bye.mp3`  
-Text to Dialogue · voices: Kit, Nim · 70 characters.
-
-```text
-Kit: Not a crumb out of place. You're a hero.
-Nim: Congratulations to the couple.
-```
+| File | Said | Line |
+| --- | --- | --- |
+| `voice/kit/hello.mp3` | getting in | Nobody panic. I'm holding a cake. |
+| `voice/kit/1.mp3` | on the way | Three tiers. And nobody there can even eat it. |
+| `voice/kit/2.mp3` | on the way | [whispers] Oh no. Oh no, a turn... |
+| `voice/kit/3.mp3` | on the way | [exhales] ...Oh. That was nothing. |
+| `voice/kit/bye.mp3` | getting out | Not a crumb out of place. |
 
 #### Ellis
 
 Harbor Lofts to Night Owl Diner, rides between 9 pm and 4:30 am. "The city was mostly a weather report." Three days stuck on that sentence, and then she was not.
 
-**Getting in** → `voice/ellis/hello.mp3`  
-Text to Dialogue · voices: Ellis, Nim · 90 characters.
-
-```text
-Ellis: Evening. Don't tell anyone I'm off the charger.
-Nim: Your secret's safe, Ellis. Night Owl Diner?
-```
-
-**On the way** → `voice/ellis/scene.mp3`  
-Text to Dialogue · voices: Ellis, Nim · 307 characters.
-
-```text
-Ellis: I've been stuck on the same sentence for three days.
-Nim: What's the sentence?
-Ellis: 'The city was...' and then nothing. The city was WHAT.
-Nim: Awake?
-Ellis: Too easy.
-Nim: Wet?
-Ellis: [laughs] That's not literature. That's a weather report.
-Nim: I am mostly a weather report.
-Ellis: ...'The city was mostly a weather report.' Huh. Hang on. Hang on, don't talk.
-```
-
-**Getting out** → `voice/ellis/bye.mp3`  
-Text to Dialogue · voices: Ellis, Nim · 63 characters.
-
-```text
-Ellis: You're getting an acknowledgment. Small print.
-Nim: I'll look for it.
-```
+| File | Said | Line |
+| --- | --- | --- |
+| `voice/ellis/hello.mp3` | getting in | Don't tell anyone I'm off the charger. |
+| `voice/ellis/1.mp3` | on the way | 'The city was...' The city was WHAT. |
+| `voice/ellis/2.mp3` | on the way | Wet? That's not literature. That's a weather report. |
+| `voice/ellis/3.mp3` | on the way | ...'Mostly a weather report.' Huh. Hang on. |
+| `voice/ellis/bye.mp3` | getting out | You're in the acknowledgments. Small print. |
 
 ## Checklist
 
@@ -1167,45 +874,83 @@ voice/car/snow.mp3
 voice/car/crossing.mp3
 voice/car/light.mp3
 voice/maya/hello.mp3
-voice/maya/scene.mp3
+voice/maya/1.mp3
+voice/maya/2.mp3
+voice/maya/3.mp3
 voice/maya/bye.mp3
 voice/okafor/hello.mp3
-voice/okafor/scene.mp3
+voice/okafor/1.mp3
+voice/okafor/2.mp3
+voice/okafor/3.mp3
 voice/okafor/bye.mp3
-voice/priya_theo/hello.mp3
-voice/priya_theo/scene.mp3
-voice/priya_theo/bye.mp3
+voice/priya/hello.mp3
+voice/priya/1.mp3
+voice/priya/2.mp3
+voice/priya/3.mp3
+voice/priya/bye.mp3
+voice/theo/hello.mp3
+voice/theo/1.mp3
+voice/theo/2.mp3
+voice/theo/3.mp3
+voice/theo/bye.mp3
 voice/lena/hello.mp3
-voice/lena/scene.mp3
+voice/lena/1.mp3
+voice/lena/2.mp3
+voice/lena/3.mp3
 voice/lena/bye.mp3
 voice/gus/hello.mp3
-voice/gus/scene.mp3
+voice/gus/1.mp3
+voice/gus/2.mp3
+voice/gus/3.mp3
 voice/gus/bye.mp3
 voice/june/hello.mp3
-voice/june/scene.mp3
+voice/june/1.mp3
+voice/june/2.mp3
+voice/june/3.mp3
 voice/june/bye.mp3
 voice/sam/hello.mp3
-voice/sam/scene.mp3
+voice/sam/1.mp3
+voice/sam/2.mp3
+voice/sam/3.mp3
 voice/sam/bye.mp3
 voice/rafael/hello.mp3
-voice/rafael/scene.mp3
+voice/rafael/1.mp3
+voice/rafael/2.mp3
+voice/rafael/3.mp3
 voice/rafael/bye.mp3
-voice/bea_tom/hello.mp3
-voice/bea_tom/scene.mp3
-voice/bea_tom/bye.mp3
+voice/bea/hello.mp3
+voice/bea/1.mp3
+voice/bea/2.mp3
+voice/bea/3.mp3
+voice/bea/bye.mp3
+voice/tom/hello.mp3
+voice/tom/1.mp3
+voice/tom/2.mp3
+voice/tom/3.mp3
+voice/tom/bye.mp3
 voice/noor/hello.mp3
-voice/noor/scene.mp3
+voice/noor/1.mp3
+voice/noor/2.mp3
+voice/noor/3.mp3
 voice/noor/bye.mp3
 voice/dev/hello.mp3
-voice/dev/scene.mp3
+voice/dev/1.mp3
+voice/dev/2.mp3
+voice/dev/3.mp3
 voice/dev/bye.mp3
 voice/hana/hello.mp3
-voice/hana/scene.mp3
+voice/hana/1.mp3
+voice/hana/2.mp3
+voice/hana/3.mp3
 voice/hana/bye.mp3
 voice/kit/hello.mp3
-voice/kit/scene.mp3
+voice/kit/1.mp3
+voice/kit/2.mp3
+voice/kit/3.mp3
 voice/kit/bye.mp3
 voice/ellis/hello.mp3
-voice/ellis/scene.mp3
+voice/ellis/1.mp3
+voice/ellis/2.mp3
+voice/ellis/3.mp3
 voice/ellis/bye.mp3
 ```

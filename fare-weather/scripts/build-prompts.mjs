@@ -9,7 +9,7 @@ import { writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SFX, MUSIC } from '../src/audio/manifest.js';
-import { VOICES, RIDERS, CAR_LINES } from '../src/data/riders.js';
+import { VOICES, RIDERS, CAR_LINES, clipsOf } from '../src/data/riders.js';
 import { POIS } from '../src/world/city.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -27,13 +27,13 @@ for (const [id, name] of POIS) POI[id] = name;
 
 const loops = SFX.filter((s) => s.loop), shots = SFX.filter((s) => !s.loop);
 const riderVoices = Object.keys(VOICES).filter((v) => v !== 'nim');
-const clipCount = RIDERS.length * 3 + CAR_LINES.length;
+const clipCount = RIDERS.reduce((n, r) => n + clipsOf(r).length, 0) + CAR_LINES.length;
 
 /** A paragraph in a voice's own words, for the Voice Design preview. */
 function sample(voiceId) {
   const lines = [];
   if (voiceId === 'nim') for (const l of CAR_LINES) lines.push(l.text);
-  for (const r of RIDERS) for (const clip of ['hello', 'scene', 'bye']) for (const l of r[clip]) if (l.who === voiceId) lines.push(l.text);
+  for (const r of RIDERS) if (r.id === voiceId) for (const [, text] of clipsOf(r)) lines.push(text);
   let text = '';
   for (const l of lines) {
     if (text.length > 260) break;
@@ -41,9 +41,6 @@ function sample(voiceId) {
   }
   return text;
 }
-
-const script = (lines) => lines.map((l) => `${VOICES[l.who].name}: ${l.text}`).join('\n');
-const speakers = (lines) => [...new Set(lines.map((l) => l.who))];
 
 // ------------------------------------------------------------------ intro
 
@@ -57,7 +54,7 @@ p(
   '## How it fits together',
   '',
   '- Save each recording under `public/audio/` with the path shown above its prompt, for example `public/audio/sfx/door_open.mp3`. The name is what links a file to its sound; the extension can be `.mp3`, `.wav`, `.m4a` or `.ogg`.',
-  '- Raw takes can go through `npm run audio` instead, which trims them, evens out their volume and joins the lines of a spoken clip: see "From takes to recordings" in the README.',
+  '- Raw takes can go through `npm run audio` instead, which trims them and evens out their volume: see "From takes to recordings" in the README.',
   '- Nothing is required. The game plays a built-in stand-in for every sound that has no recording yet, and shows voices as subtitles, so you can add files a few at a time and hear each one replace its stand-in.',
   '- With `npm run dev` running, the page reloads by itself when a file is added or removed.',
   '',
@@ -66,7 +63,7 @@ p(
   `| Sound effects | ${SFX.length} (${loops.length} loops, ${shots.length} one-shots) | Sound Effects | \`public/audio/sfx/\` |`,
   `| Radio tracks | ${MUSIC.length} | Music | \`public/audio/music/\` |`,
   `| Voices to create | ${riderVoices.length + 1} | Voice Design | (stay in your ElevenLabs voice library) |`,
-  `| Spoken clips | ${clipCount} | Text to Dialogue, or Text to Speech for one voice | \`public/audio/voice/\` |`,
+  `| Spoken clips | ${clipCount} | Text to Speech | \`public/audio/voice/\` |`,
   '',
   'A sensible order: a few loops first (`cabin_drive`, `rain_light`, `city_night`) because they are heard the most, then one radio track, then the car voice and one rider to check the voices sit well in the mix.',
   '',
@@ -153,12 +150,12 @@ for (const id of ['nim', ...riderVoices]) {
 p(
   '## 4. Spoken clips',
   '',
-  'Tool: **Text to Dialogue** (model **Eleven v3** or **v4**) for clips with more than one speaker, **Text to Speech** with the same model for clips with one. Give each line to the voice named in front of it. Where only Text to Speech is to hand, record each line on its own with its speaker\'s voice and let `npm run audio` join them.',
+  'Tool: **Text to Speech**, model **Eleven v3** or **v4**. Every clip is one voice saying one short thing: nobody in the cab makes conversation.',
   '',
   '- Words in `[square brackets]` are delivery cues for the model (`[laughs]`, `[whispers]`, `[exhales]`). Leave them in. An ellipsis is a pause; CAPITALS are emphasis.',
-  '- Do not paste the speaker names into the text itself: in Text to Dialogue each line is its own block with its own voice.',
-  '- Keep each clip as one file. The game spreads the subtitles across it by the length of each line, so natural pauses are fine, but long silences at the start or end will put the subtitles out of step: trim them.',
-  '- A call is one side only. The pauses where the other end talks are written as "..."; let them breathe.',
+  '- Keep each clip as one file, and trim long silences from its ends.',
+  '- The lines are said to nobody in particular: under the breath, to the window. A take that sounds like an announcement is the wrong take.',
+  '- A call is one side only: the rider talks into a phone, and the gaps between the clips are the other end talking.',
   '- If a take sounds read rather than said, generate again before changing the words.',
   '',
   '### The car on its own',
@@ -176,27 +173,13 @@ const WHEN = {
 for (const l of CAR_LINES) p(`| \`voice/car/${l.id}.mp3\` | ${WHEN[l.when] || l.when} | ${l.text} |`);
 p('');
 
-p('### Riders', '', 'Three clips each: getting in, a minute or so into the trip, getting out.', '');
+p('### Riders', '', 'One robot to a ride. Each says something as they get in, a few short things on the way, well apart, and something as they get out. One file each, in the voice of that name.', '');
 for (const r of RIDERS) {
-  const names = r.party.map((x) => VOICES[x.voice].name).join(' and ');
   const when = r.hours ? `rides between ${hourText(r.hours[0])} and ${hourText(r.hours[1])}` : 'rides at any hour';
-  p(`#### ${names}`, '', `${POI[r.from]} to ${POI[r.to]}, ${when}. ${r.memory}`, '');
-  for (const [clip, label] of [['hello', 'Getting in'], ['scene', 'On the way'], ['bye', 'Getting out']]) {
-    const lines = r[clip];
-    const who = speakers(lines);
-    const chars = lines.reduce((n, l) => n + l.text.length, 0);
-    const tool = who.length > 1 ? 'Text to Dialogue' : 'Text to Speech';
-    const note = clip === 'scene' && r.party.some((x) => x.call) ? ' One side of a phone call.' : '';
-    p(
-      `**${label}** → \`voice/${r.id}/${clip}.mp3\`  `,
-      `${tool} · voices: ${who.map((w) => VOICES[w].name).join(', ')} · ${chars} characters.${note}`,
-      '',
-      '```text',
-      script(lines),
-      '```',
-      '',
-    );
-  }
+  const way = r.call ? 'on the way, into a phone' : 'on the way';
+  p(`#### ${VOICES[r.id].name}`, '', `${POI[r.from]} to ${POI[r.to]}, ${when}. ${r.memory}`, '', '| File | Said | Line |', '| --- | --- | --- |');
+  for (const [clip, text] of clipsOf(r)) p(`| \`voice/${r.id}/${clip}.mp3\` | ${clip === 'hello' ? 'getting in' : clip === 'bye' ? 'getting out' : way} | ${text} |`);
+  p('');
 }
 
 // ------------------------------------------------------------------ checklist
@@ -205,14 +188,14 @@ p('## Checklist', '', 'Every file the game looks for, under `public/audio/`:', '
 for (const s of SFX) p(`sfx/${s.id}.mp3`);
 for (const m of MUSIC) p(`music/${m.id}.mp3`);
 for (const l of CAR_LINES) p(`voice/car/${l.id}.mp3`);
-for (const r of RIDERS) for (const c of ['hello', 'scene', 'bye']) p(`voice/${r.id}/${c}.mp3`);
+for (const r of RIDERS) for (const [c] of clipsOf(r)) p(`voice/${r.id}/${c}.mp3`);
 p('```', '');
 
-// sanity: nothing may exceed what one Text to Dialogue request accepts
-const tooLong = RIDERS.flatMap((r) => ['hello', 'scene', 'bye'].map((c) => [`${r.id}/${c}`, r[c].reduce((n, l) => n + l.text.length, 0)])).filter(([, n]) => n > 2000);
-if (tooLong.length) throw new Error(`clips over 2000 characters: ${tooLong.map(([k, n]) => `${k} (${n})`).join(', ')}`);
-const unknown = RIDERS.flatMap((r) => ['hello', 'scene', 'bye'].flatMap((c) => r[c].map((l) => l.who))).filter((w) => !VOICES[w]);
-if (unknown.length) throw new Error(`lines for voices that are not defined: ${[...new Set(unknown)].join(', ')}`);
+// sanity: every rider has a voice, and every line is short enough to be a remark
+const tooLong = RIDERS.flatMap((r) => clipsOf(r).map(([c, text]) => [`${r.id}/${c}`, text.length])).filter(([, n]) => n > 90);
+if (tooLong.length) throw new Error(`lines over 90 characters: ${tooLong.map(([k, n]) => `${k} (${n})`).join(', ')}`);
+const unknown = RIDERS.map((r) => r.id).filter((w) => !VOICES[w]);
+if (unknown.length) throw new Error(`riders with no voice of their name: ${unknown.join(', ')}`);
 const noPoi = RIDERS.filter((r) => !POI[r.from] || !POI[r.to]);
 if (noPoi.length) throw new Error(`riders with unknown places: ${noPoi.map((r) => r.id).join(', ')}`);
 

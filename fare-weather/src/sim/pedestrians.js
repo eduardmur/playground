@@ -1,7 +1,9 @@
 // Who is out on the pavements: robots, some with a dog at heel, and dogs on
 // their own carrying parcels. They walk the edges of their block, wait at the
 // corners for the lights, and cross on the crosswalks; cars count them and they
-// count the cars. Riders are the same figures, steered by the ride script.
+// count the cars. Whatever stands on the pavement (lamp posts, trees, benches,
+// bus shelters) they step round, and they never stop where one of them is.
+// Riders are the same figures, steered by the ride script.
 import * as THREE from 'three';
 import { SIDEWALK_W, CURB_H, SIG } from '../world/city.js';
 import { clamp, damp, dampAngle, angleDiff, mulberry32 } from '../core/utils.js';
@@ -14,6 +16,9 @@ const COURIERS = 0.13; // the share of the crowd that is a dog out on an errand
 const PETS = 0.2; // and the share of robots with a dog at heel
 const SHOW = 135; // metres: further off than this nobody is drawn
 const SHADOW = 55; // and only those this close cast shadows
+const BODY = 0.3, DOG = 0.2; // the room a robot, and a dog, takes up around its middle
+const CELL = 4; // metres: the grid the things on the pavement are filed in
+const cell = (x, z) => (Math.floor(x / CELL) + 2048) * 4096 + Math.floor(z / CELL) + 2048;
 
 // corner k of a block and which way the two pavement edges leave it: [clockwise, counter-clockwise] headings
 const EDGE_OUT = [[1, 2], [2, 3], [3, 0], [0, 1]];
@@ -38,7 +43,13 @@ class Ped {
     this.brolly = rnd() < 0.7; // owns an umbrella
     this.pet = null; // a dog at heel: { x, z, yaw, v, still, look, body }
     this.still = 0; // seconds since they last moved
-    this.inset = SIDEWALK_W / 2 - 0.2 + (rnd() - 0.5) * 1.4; // far enough in to stay on the kerb at rounded corners
+    this.inset = 1.85 + rnd() * 1.15; // in from the kerb: past the row of trees and lamp posts, short of the benches by the wall
+    this.nx = 0; // which way is in from the kerb on the pavement being walked (0, 0 off the pavements)
+    this.nz = 0;
+    this.kerb = 0; // and where that kerb is
+    this.far = 0; // how far the last look said it still was to go
+    this.farT = 0;
+    this.ghost = 0; // seconds left of walking straight through things, for someone who got stuck
     this.mode = 'edge';
     this.tx = 0;
     this.tz = 0;
@@ -58,8 +69,15 @@ class Ped {
 }
 
 export class Pedestrians {
-  constructor(city, { target = 54 } = {}) {
+  constructor(city, { target = 54, solid = [] } = {}) {
     this.city = city;
+    // what stands on the pavements: { x, z, r }, filed by the square of ground it is in
+    this.solid = new Map();
+    for (const o of solid) {
+      const k = cell(o.x, o.z);
+      if (!this.solid.has(k)) this.solid.set(k, []);
+      this.solid.get(k).push(o);
+    }
     this.target = target;
     this.peds = [];
     this.list = this.peds;
@@ -116,16 +134,100 @@ export class Pedestrians {
     return k === 0 ? 1 : 2;
   }
 
+  // ------------------------------------------------------------ what is in the way
+
+  /** Call fn for everything standing within a few metres of (x, z). */
+  _around(x, z, fn) {
+    const i = Math.floor(x / CELL), j = Math.floor(z / CELL);
+    for (let a = i - 1; a <= i + 1; a++) {
+      for (let b = j - 1; b <= j + 1; b++) {
+        const list = this.solid.get((a + 2048) * 4096 + b + 2048);
+        if (list) for (const o of list) fn(o);
+      }
+    }
+  }
+
+  /** The nearest point to (x, z) where something `r` across can stand without being inside a lamp post. */
+  clear(x, z, r = BODY) {
+    for (let pass = 0; pass < 3; pass++) {
+      let moved = false;
+      this._around(x, z, (o) => {
+        const dx = x - o.x, dz = z - o.z, d = Math.hypot(dx, dz), need = o.r + r + 0.03;
+        if (d >= need) return;
+        if (d < 1e-4) x += need;
+        else {
+          x = o.x + (dx / d) * need;
+          z = o.z + (dz / d) * need;
+        }
+        moved = true;
+      });
+      if (!moved) break;
+    }
+    return [x, z];
+  }
+
+  /**
+   * How fast to step sideways (metres a second, positive to the left of the way they are going) to pass whatever
+   * stands ahead. Each thing asks for the room it still needs, more urgently the nearer it is; on a pavement
+   * the way round is the one that stays between the kerb and the wall.
+   */
+  _dodge(p, ux, uz, dist) {
+    const r = p.kind === 'dog' ? DOG : BODY;
+    const look = Math.min(dist, 1.3 + p.speed);
+    const lx = -uz, lz = ux; // to the left
+    const paved = p.nx || p.nz;
+    const inset = paved ? (p.nx ? (p.x - p.kerb) * p.nx : (p.z - p.kerb) * p.nz) : 0;
+    const din = lx * p.nx + lz * p.nz; // a step to the left is this much further in from the kerb
+    let push = 0;
+    this._around(p.x, p.z, (o) => {
+      const ox = o.x - p.x, oz = o.z - p.z;
+      const ahead = ox * ux + oz * uz;
+      if (ahead < -0.25 || ahead > look + o.r) return;
+      const lat = ox * lx + oz * lz, room = o.r + r + 0.08;
+      if (Math.abs(lat) >= room) return;
+      // round the side they are already on; dead ahead, one way or the other for good
+      let dir = lat > 0.03 ? -1 : lat < -0.03 ? 1 : p.id & 1 ? 1 : -1;
+      let need = room - Math.abs(lat);
+      if (paved) {
+        const there = inset + dir * need * din;
+        if (there < 0.6 || there > SIDEWALK_W - 0.55) {
+          // that way leads off the kerb or into the wall: cross over and pass on the other side
+          const other = inset - dir * (room + Math.abs(lat)) * din;
+          if (other >= 0.6 && other <= SIDEWALK_W - 0.55) {
+            dir = -dir;
+            need = room + Math.abs(lat);
+          }
+        }
+      }
+      push += dir * need * (1 + 3 * (1 - clamp(ahead / (look + o.r), 0, 1)));
+    });
+    return clamp(push * 1.6, -1.1, 1.1);
+  }
+
   // ------------------------------------------------------------ choosing where to go
 
   _go(p, mode, toBlock, toCorner, heading) {
-    const [x, z] = this.cornerPoint(toBlock, toCorner, p.inset);
+    const [x, z] = this.clear(...this.cornerPoint(toBlock, toCorner, p.inset), p.kind === 'dog' ? DOG : BODY);
     p.mode = mode;
     p.tx = x;
     p.tz = z;
     p.nextBlock = toBlock;
     p.nextCorner = toCorner;
     p.heading = heading;
+    p.far = p.farT = 0;
+    p.nx = p.nz = 0;
+    if (mode === 'edge') {
+      // which pavement this is: the kerb it runs along, and which way is in from it
+      if (heading % 2 === 0) {
+        const west = toCorner === 0 || toCorner === 3;
+        p.nx = west ? 1 : -1;
+        p.kerb = west ? toBlock.x0 : toBlock.x1;
+      } else {
+        const north = toCorner === 0 || toCorner === 1;
+        p.nz = north ? 1 : -1;
+        p.kerb = north ? toBlock.z0 : toBlock.z1;
+      }
+    }
   }
 
   _decide(p) {
@@ -200,7 +302,7 @@ export class Pedestrians {
       const k2 = this.edgeEnd(k, heading);
       const [ax, az] = this.cornerPoint(b, k, p.inset), [bx, bz] = this.cornerPoint(b, k2, p.inset);
       const f = this.rnd();
-      const x = ax + (bx - ax) * f, z = az + (bz - az) * f;
+      const [x, z] = this.clear(ax + (bx - ax) * f, az + (bz - az) * f);
       const d = Math.hypot(x - ex, z - ez);
       if (d > 165 || (!anywhere && d < 75)) continue;
       p.x = x;
@@ -239,6 +341,7 @@ export class Pedestrians {
     p.mode = 'goto';
     p.tx = x;
     p.tz = z;
+    p.nx = p.nz = p.far = p.farT = 0;
     p.speed = speed;
     p.onArrive = onArrive || null;
   }
@@ -319,9 +422,23 @@ export class Pedestrians {
             this._decide(p);
           }
         } else {
-          p.x += (dx / d) * step;
-          p.z += (dz / d) * step;
-          p.yaw = dampAngle(p.yaw, Math.atan2(-dx, -dz), 9, dt);
+          const ux = dx / d, uz = dz / d, x0 = p.x, z0 = p.z;
+          p.x += ux * step;
+          p.z += uz * step;
+          // someone who is getting nowhere stops minding what is in the way for a moment
+          p.farT += dt;
+          if (p.farT > 3) {
+            if (p.far > 0 && p.far - d < 0.6 && p.ghost <= 0) p.ghost = 2.5;
+            p.far = d;
+            p.farT = 0;
+          }
+          if (p.ghost > 0) p.ghost -= dt;
+          else if (p.mode !== 'cross') {
+            const side = this._dodge(p, ux, uz, d) * dt;
+            [p.x, p.z] = this.clear(p.x - uz * side, p.z + ux * side, p.kind === 'dog' ? DOG : BODY);
+          }
+          // face the way they are actually going, which is not quite at the corner while stepping round a tree
+          p.yaw = dampAngle(p.yaw, Math.atan2(x0 - p.x, z0 - p.z), 9, dt);
           moving = true;
         }
       } else if (p.mode === 'wait') {
@@ -362,7 +479,8 @@ export class Pedestrians {
   _heel(p, dt) {
     const d = p.pet;
     const fx = -Math.sin(p.yaw), fz = -Math.cos(p.yaw);
-    const tx = p.x + fz * -d.side * 0.55 - fx * 0.3, tz = p.z + fx * d.side * 0.55 - fz * 0.3;
+    // beside them, or as near to that as the lamp post allows
+    const [tx, tz] = this.clear(p.x + fz * -d.side * 0.55 - fx * 0.3, p.z + fx * d.side * 0.55 - fz * 0.3, DOG);
     const dx = tx - d.x, dz = tz - d.z, dist = Math.hypot(dx, dz);
     if (dist > 6) {
       // too far to have walked: it was with them all along
@@ -375,8 +493,8 @@ export class Pedestrians {
     d.v = dist < 0.06 ? 0 : Math.min(2.3, dist * 3.5 + 0.2);
     if (d.v > 0) {
       const step = Math.min(dist, d.v * dt);
-      d.x += (dx / dist) * step;
-      d.z += (dz / dist) * step;
+      // round the lamp post, not through it
+      [d.x, d.z] = this.clear(d.x + (dx / dist) * step, d.z + (dz / dist) * step, DOG);
     }
     d.yaw = dampAngle(d.yaw, d.v > 0.5 ? Math.atan2(-dx, -dz) : p.yaw, 7, dt);
   }

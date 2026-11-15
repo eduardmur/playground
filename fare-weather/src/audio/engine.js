@@ -17,8 +17,8 @@ const SFX_BY_ID = new Map(SFX.map((s) => [s.id, s]));
 const rand = (a, b) => a + Math.random() * (b - a);
 
 /**
- * What scripts/audio-tools.mjs noted about a recording it made: extra gain it could not put in the
- * file, and when each line of a spoken clip starts. Only trusted while the file is still that long.
+ * What scripts/audio-tools.mjs noted about a recording it made: the gain it could not put in the
+ * file without clipping. Only trusted while the file is still that long.
  */
 const noteFor = (key, buf) => {
   const n = NOTES[key];
@@ -92,9 +92,13 @@ export class AudioEngine {
     this.ready = false;
     this.buffers = new Map(); // key -> AudioBuffer (recorded sound effects; voices are not kept)
     this.loading = new Map();
-    this.vol = { master: 0.9, music: 0.6, ambience: 0.8, voice: 1 };
+    // voices sit just above the radio (about 2 LU over it while it is ducked): what is said in the cab is
+    // part of the evening, not an announcement
+    this.vol = { master: 0.9, music: 0.6, ambience: 0.8, voice: 0.55 };
     try {
-      Object.assign(this.vol, JSON.parse(localStorage.getItem('fare-weather.volume') || '{}'));
+      const { v, ...saved } = JSON.parse(localStorage.getItem('fare-weather.volume') || '{}');
+      if (v !== 2 && saved.voice === 1) delete saved.voice; // saved when voices were full up by default: take the new default
+      Object.assign(this.vol, saved);
     } catch {
       /* fine */
     }
@@ -145,13 +149,14 @@ export class AudioEngine {
     this.outFilter.type = 'lowpass';
     this.outFilter.frequency.value = 800;
     this.outBus.connect(this.outFilter).connect(this.master);
-    // riders and the car's own voice
+    // riders and the car's own voice. Heads nod to the voice as recorded, however far down it is turned
+    this.voiceIn = ctx.createGain();
     this.voiceBus = ctx.createGain();
     this.analyser = ctx.createAnalyser();
     this.analyser.fftSize = 256;
     this._wave = new Uint8Array(this.analyser.fftSize);
-    this.voiceBus.connect(this.analyser);
-    this.voiceBus.connect(this.master);
+    this.voiceIn.connect(this.analyser);
+    this.voiceIn.connect(this.voiceBus).connect(this.master);
     // radio: plays "through the speakers", so it gets a touch of cabin colouring
     this.musicBus = ctx.createGain();
     this.musicDuck = ctx.createGain();
@@ -192,7 +197,7 @@ export class AudioEngine {
     this.vol[name] = clamp01(value);
     this._applyVolumes();
     try {
-      localStorage.setItem('fare-weather.volume', JSON.stringify(this.vol));
+      localStorage.setItem('fare-weather.volume', JSON.stringify({ ...this.vol, v: 2 }));
     } catch {
       /* fine */
     }
@@ -276,9 +281,9 @@ export class AudioEngine {
   // ------------------------------------------------------------ voices
 
   /**
-   * Speak a clip. `lines` is [{ who, name, text }]. With a recording, each subtitle
-   * comes up as its line starts where that is known, and otherwise they are spread
-   * across its length; without a recording they are shown at reading pace.
+   * Speak a clip. `lines` is [{ who, name, text }], nearly always one line. With a recording
+   * the subtitle stays up for as long as it lasts (several lines share its length by their own);
+   * without one it is shown at reading pace.
    * Returns a promise that resolves when it is over (or was cut short).
    */
   say(key, lines) {
@@ -300,19 +305,18 @@ export class AudioEngine {
         resolve();
       };
       state.finish = finish;
-      const run = (duration, hasAudio, starts = null) => {
+      const run = (duration, hasAudio) => {
         if (state.stopped) return finish();
         state.silent = !hasAudio; // subtitles only: no need to duck the radio
-        const exact = starts && starts.length === lines.length ? starts : null;
         let at = 0;
-        lines.forEach((line, i) => {
+        for (const line of lines) {
           state.timers.push(setTimeout(() => {
             if (state.stopped) return;
             this.speaking = line.who;
             this.onSubtitle?.({ who: line.who, name: line.name, text: plain(line.text), silent: !hasAudio });
-          }, (exact ? exact[i] : at) * 1000));
+          }, at * 1000));
           at += (weight(line.text) / total) * duration;
-        });
+        }
         state.timers.push(setTimeout(finish, duration * 1000 + 250));
       };
       const fallback = () => run(Math.max(1.6, total * 0.058), false);
@@ -322,10 +326,10 @@ export class AudioEngine {
         if (!buf) return fallback();
         const src = this.ctx.createBufferSource();
         src.buffer = buf;
-        src.connect(this.voiceBus);
+        src.connect(this.voiceIn);
         src.start();
         state.src = src;
-        run(buf.duration, true, noteFor(key, buf)?.at);
+        run(buf.duration, true);
       });
     });
   }
@@ -453,8 +457,8 @@ export class AudioEngine {
     this.outFilter.frequency.value = lerp(750, 9000, door * door);
     this.outBus.gain.value = this.vol.ambience * lerp(0.6, 1.7, door);
 
-    // the radio steps back while someone is talking
-    const duck = this._say && !this._say.silent ? 0.42 : 1;
+    // the radio steps back a little while someone is talking: enough to hear them over it, not enough to pump
+    const duck = this._say && !this._say.silent ? 0.65 : 1;
     this.musicDuck.gain.value = damp(this.musicDuck.gain.value, duck, 3, dt);
 
     // how loud the voice is right now, for heads that nod along

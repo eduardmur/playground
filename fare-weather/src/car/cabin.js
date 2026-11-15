@@ -233,11 +233,10 @@ export class Cabin {
       this.doors[s < 0 ? 'L' : 'R'] = { pivot, open: 0, target: 0, sign: s };
     }
 
-    // seats: where passengers get attached
-    this.seatAnchor = { L: new THREE.Group(), R: new THREE.Group() };
-    this.seatAnchor.L.position.set(-0.37, 0, 0);
-    this.seatAnchor.R.position.set(0.37, 0, 0);
-    this.group.add(this.seatAnchor.L, this.seatAnchor.R);
+    // where the rider is attached: the right-hand seat, by the kerb. The other one stays empty
+    this.seatAnchor = new THREE.Group();
+    this.seatAnchor.position.set(0.37, 0, 0);
+    this.group.add(this.seatAnchor);
 
     // ---- light
     this.sun = new THREE.DirectionalLight(0xffffff, 0);

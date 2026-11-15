@@ -75,7 +75,9 @@ export class Game {
     const startLane = this.city.lanes.find((l) => l.road.name === 'Grand Blvd' && l.dir === 0 && l.k === 0 && l.from.j === 5);
     this.ego.spawn(startLane, 18);
     this.traffic.populate(this.ego.x, this.ego.z);
-    this.peds = new Pedestrians(this.city);
+    // everything that stands on a pavement, trees included, so that whoever walks there goes round it
+    const solid = [...this.props.solid, ...this.trees.spots.map((t) => ({ x: t.x, z: t.z, r: 0.24 }))];
+    this.peds = new Pedestrians(this.city, { solid });
     this.world.add(this.peds.group);
     this.peds.populate(this.ego.x, this.ego.z);
     this.pedGap = Infinity;

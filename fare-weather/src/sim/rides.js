@@ -1,7 +1,7 @@
-// The shift: a ride comes in, the cab drives to the kerb, people get in, talk,
-// and get out again. Each stage is a generator that yields "wait this long",
-// "wait until this is true" or "wait for this promise", which keeps the
-// sequence readable as a script.
+// The shift: a ride comes in, the cab drives to the kerb, someone gets in, says
+// a thing or two to themselves on the way, and gets out again. Each stage is a
+// generator that yields "wait this long", "wait until this is true" or "wait
+// for this promise", which keeps the sequence readable as a script.
 import { RIDERS, CAR_LINES, VOICES } from '../data/riders.js';
 import { Passenger } from '../car/passenger.js';
 import { normalizeLook } from '../robots/looks.js';
@@ -24,8 +24,8 @@ export class Rides {
     this.wait = 0;
     this.until = null;
     this.arrived = false;
-    this.seats = { L: null, R: null };
-    this.figures = [];
+    this.seat = null; // the rider in the cab: there is only ever one, in the right-hand seat
+    this.figure = null; // the same rider out on the pavement
     this.status = { label: '', headline: 'Fare Weather', sub: '', rider: null, riderColor: null };
     this.statusT = 0;
     this.lastId = null;
@@ -71,8 +71,8 @@ export class Rides {
     const { city } = this.game;
     return {
       ...r, quiet: false,
-      party: r.party.map(normalizeLook),
-      name: r.party.map((p) => VOICES[p.voice].name).join(' & '),
+      look: normalizeLook({ ...r.look, voice: r.id }),
+      name: VOICES[r.id].name,
       fromZone: city.poi[r.from], toZone: city.poi[r.to],
     };
   }
@@ -117,7 +117,7 @@ export class Rides {
     to = to || pick(zones);
     return {
       id: null, quiet: true, color: '#7f8a96', name: pick(NAMES), fromZone: from, toZone: to,
-      party: [pick(this.game.peds.cast)], // someone off the street
+      look: pick(this.game.peds.cast), // someone off the street
     };
   }
 
@@ -147,12 +147,15 @@ export class Rides {
     };
   }
 
-  _lines(list) {
-    return list.map((l) => ({ who: l.who, name: VOICES[l.who].name, text: l.text }));
+  /** One of the rider's own lines: `clip` names the recording (data/riders.js, clipsOf). */
+  _say(ride, clip, text) {
+    return this.game.audio.say(riderFile(ride.id, clip), [{ who: ride.id, name: ride.name, text }]);
   }
 
-  _speak(ride, clip) {
-    return this.game.audio.say(riderFile(ride.id, clip), this._lines(ride[clip]));
+  /** Wait this long, or until the cab has arrived, whichever comes first. */
+  _pause(seconds) {
+    const end = this.game.time + seconds;
+    return () => this.arrived || this.game.time >= end;
   }
 
   /** One of the car's own lines for an occasion. */
@@ -192,13 +195,9 @@ export class Rides {
     this.ride = ride;
     this.lastId = ride.id;
     this.said = {};
-    ride.party.forEach((look, i) => {
-      const side = i === 0 ? 'R' : 'L';
-      const pass = new Passenger(look, i === 0 ? 1 : -1);
-      cabin.seatAnchor[side].add(pass.group);
-      pass.settle();
-      this.seats[side] = pass;
-    });
+    const pass = (this.seat = new Passenger(ride.look, 1));
+    cabin.seatAnchor.add(pass.group);
+    pass.settle();
     for (let i = 0; i < 12 && !ego.setDestination(ride.toZone); i++) ride.toZone = pick(g.city.zones);
     this.tripStart = ego.odometer;
     this.tripT0 = g.time;
@@ -206,7 +205,7 @@ export class Rides {
     this._setStatus({ label: 'On board', headline: ride.name, sub: ride.toZone.name, rider: ride.name, riderColor: ride.color });
     ego.depart();
     yield 2;
-    if (!ride.quiet) yield this._speak(ride, 'hello');
+    if (!ride.quiet) yield this._say(ride, 'hello', ride.hello);
     yield* this._trip(ride);
     yield* this._alighting(ride);
     this.ride = null;
@@ -223,10 +222,7 @@ export class Rides {
     this.said = {};
     const zf = ride.fromZone;
     // they are already waiting at the kerb
-    this.figures = ride.party.map((look, i) => {
-      const along = (i - (ride.party.length - 1) / 2) * 0.9;
-      return peds.addRider(zf.cx + zf.nx * 1.35 + zf.lane.tx * along, zf.cz + zf.nz * 1.35 + zf.lane.tz * along, Math.atan2(zf.nx, zf.nz), look);
-    });
+    this.figure = peds.addRider(...peds.clear(zf.cx + zf.nx * 1.35, zf.cz + zf.nz * 1.35), Math.atan2(zf.nx, zf.nz), ride.look);
     audio.play('chime_request');
     g.screen.say(`New ride  ·  ${ride.name}`, 4);
     this.state = 'toPickup';
@@ -237,8 +233,8 @@ export class Rides {
       this.arrived = false;
       if (!ego.setDestination(zf)) {
         // no way there: give up on this one
-        for (const f of this.figures) peds.remove(f);
-        this.figures = [];
+        peds.remove(this.figure);
+        this.figure = null;
         return;
       }
       yield 1.4;
@@ -253,67 +249,50 @@ export class Rides {
 
   *_boarding(ride) {
     const g = this.game, ego = g.ego, cabin = g.cabin, audio = g.audio, peds = g.peds;
+    const fig = this.figure;
     this.state = 'boarding';
     ego.hazard = true;
-    for (const f of this.figures) f.wave = 0;
+    fig.wave = 0;
     audio.play('chime_pickup');
-    this._setStatus({ label: 'Picking up', headline: ride.name, sub: 'Doors opening', rider: ride.name, riderColor: ride.color });
+    this._setStatus({ label: 'Picking up', headline: ride.name, sub: 'Door opening', rider: ride.name, riderColor: ride.color });
     yield 0.7;
 
-    for (let i = 0; i < ride.party.length; i++) {
-      const side = i === 0 ? 'R' : 'L';
-      const s = side === 'R' ? 1 : -1;
-      const fig = this.figures[i];
-      const look = ride.party[i];
-      cabin.setDoor(side, true);
-      audio.play('door_open', { pan: s * 0.5 });
-      if (side === 'L') {
-        // the second rider walks round the nose of the car to the far door
-        yield this._walk(fig, this._local(1.6, -3.1));
-        fig.onRoad = true;
-        yield this._walk(fig, this._local(-1.6, -3.1));
-        yield this._walk(fig, this._local(-1.5, 0.15));
-      } else {
-        yield this._walk(fig, this._local(1.5, 0.15));
-      }
-      // turn side-on to the seat and duck in under the door
-      const yaw0 = ego.yaw + s * (Math.PI / 2), [x0, z0] = this._local(s * 1.5, 0.15), [x1, z1] = this._local(s * 1.12, 0.12);
-      fig.yaw = yaw0;
-      yield this._tween(0.6, (k) => {
-        const m = easeInOut(k);
-        fig.sink = m;
-        fig.yaw = yaw0 - s * m * 2.05;
-        fig.x = lerp(x0, x1, m);
-        fig.z = lerp(z0, z1, m);
-      });
-      peds.remove(fig);
+    // the kerb is on the cab's right, and so is the rider's seat
+    cabin.setDoor('R', true);
+    audio.play('door_open', { pan: 0.5 });
+    yield this._walk(fig, this._local(1.5, 0.15));
+    // turn side-on to the seat and duck in under the door
+    const yaw0 = ego.yaw + Math.PI / 2, [x0, z0] = this._local(1.5, 0.15), [x1, z1] = this._local(1.12, 0.12);
+    fig.yaw = yaw0;
+    yield this._tween(0.6, (k) => {
+      const m = easeInOut(k);
+      fig.sink = m;
+      fig.yaw = yaw0 - m * 2.05;
+      fig.x = lerp(x0, x1, m);
+      fig.z = lerp(z0, z1, m);
+    });
+    peds.remove(fig);
+    this.figure = null;
 
-      const pass = new Passenger(look, s);
-      cabin.seatAnchor[side].add(pass.group);
-      this.seats[side] = pass;
-      audio.play('seat', { pan: s * 0.5 });
-      let seated = false;
-      pass.enter(() => (seated = true));
-      yield () => seated;
-      yield 0.3;
-      cabin.setDoor(side, false);
-      audio.play('door_close', { pan: s * 0.5 });
-      yield 1.35;
-    }
-    this.figures = [];
+    const pass = (this.seat = new Passenger(ride.look, 1));
+    cabin.seatAnchor.add(pass.group);
+    audio.play('seat', { pan: 0.5 });
+    let seated = false;
+    pass.enter(() => (seated = true));
+    yield () => seated;
+    yield 0.3;
+    cabin.setDoor('R', false);
+    audio.play('door_close', { pan: 0.5 });
+    yield 1.35;
 
     this._setStatus({ label: 'On board', headline: ride.name, sub: ride.toZone.name, rider: ride.name, riderColor: ride.color });
     if (ride.quiet) {
       const h = g.hour;
       yield this._car(h >= 4.5 && h < 11 ? 'welcome_morning' : h >= 18 || h < 4.5 ? 'welcome_night' : 'welcome');
-    } else yield this._speak(ride, 'hello');
-    for (const side of ['R', 'L']) {
-      const p = this.seats[side];
-      if (!p) continue;
-      audio.play('belt', { pan: side === 'R' ? 0.5 : -0.5 });
-      p.buckle();
-      yield 0.55;
-    }
+    } else yield this._say(ride, 'hello', ride.hello);
+    audio.play('belt', { pan: 0.5 });
+    pass.buckle();
+    yield 0.55;
     ego.hazard = false;
     // if the planner cannot reach the place they asked for, take them somewhere it can
     for (let i = 0; i < 12 && !ego.setDestination(ride.toZone); i++) ride.toZone = pick(g.city.zones);
@@ -324,80 +303,84 @@ export class Rides {
   }
 
   *_trip(ride) {
-    const g = this.game, ego = g.ego;
+    const g = this.game, ego = g.ego, audio = g.audio;
     this.state = 'toDropoff';
     this.arrived = false;
     yield () => ego.mode !== 'parked' || this.arrived;
-    yield rand(5, 8);
+    yield this._pause(rand(5, 8));
     // a word about the weather, now and then
     const kind = g.weather.kind;
-    if (!this.arrived && ['rain', 'storm', 'fog', 'snow'].includes(kind) && Math.random() < (ride.quiet ? 0.8 : 0.4)) {
+    if (!this.arrived && ['rain', 'storm', 'fog', 'snow'].includes(kind) && Math.random() < (ride.quiet ? 0.8 : 0.3)) {
       yield this._car(kind);
-      yield rand(3, 6);
-    } else if (ride.quiet && Math.random() < 0.5) {
+    } else if (!this.arrived && ride.quiet && Math.random() < 0.5) {
       yield this._car('depart');
     }
     if (!ride.quiet) {
-      yield rand(3, 7);
-      yield this._speak(ride, 'scene');
+      // what the rider has to say: a few short things, with a good while between them. A call is the
+      // same with shorter gaps, the other end talking, and a hand at the ear from its first word to its last
+      const pass = this.seat;
+      yield this._pause(rand(4, 8));
+      for (let i = 0; i < ride.lines.length && !this.arrived; i++) {
+        yield () => !audio.talking;
+        if (ride.call && !pass.calling) {
+          pass.calling = true;
+          yield 1.2;
+        }
+        yield this._say(ride, String(i + 1), ride.lines[i]);
+        if (i < ride.lines.length - 1) yield this._pause(ride.call ? rand(2.5, 4.5) : rand(9, 16));
+      }
+      if (pass.calling) {
+        yield this._pause(0.9);
+        pass.calling = false;
+      }
     }
     yield () => this.arrived || ego.remaining() < 150;
-    if (!this.arrived && Math.random() < 0.55) yield this._car('near');
+    if (!this.arrived && !audio.talking && Math.random() < 0.55) yield this._car('near');
     yield () => this.arrived;
   }
 
   *_alighting(ride) {
     const g = this.game, ego = g.ego, cabin = g.cabin, audio = g.audio, peds = g.peds;
-    const zt = ride.toZone;
+    const zt = ride.toZone, pass = this.seat;
     this.state = 'alighting';
     ego.hazard = true;
+    pass.calling = false;
     audio.play('chime_arrive');
     this._setStatus({ label: 'Arrived', headline: zt.name, sub: zt.poi ? zt.address : '', rider: ride.name, riderColor: ride.color });
     yield 0.9;
+    yield () => !audio.talking;
     if (ride.quiet) yield this._car('arrive');
-    else yield this._speak(ride, 'bye');
+    else yield this._say(ride, 'bye', ride.bye);
 
-    for (const side of ['R', 'L']) {
-      const pass = this.seats[side];
-      if (!pass) continue;
-      const s = side === 'R' ? 1 : -1;
-      audio.play('belt_off', { pan: s * 0.5 });
-      yield 0.4;
-      cabin.setDoor(side, true);
-      audio.play('door_open', { pan: s * 0.5 });
-      yield 0.85;
-      let out = false;
-      pass.leave(() => (out = true));
-      yield () => out;
-      pass.dispose();
-      this.seats[side] = null;
+    audio.play('belt_off', { pan: 0.5 });
+    yield 0.4;
+    cabin.setDoor('R', true);
+    audio.play('door_open', { pan: 0.5 });
+    yield 0.85;
+    let out = false;
+    pass.leave(() => (out = true));
+    yield () => out;
+    pass.dispose();
+    this.seat = null;
 
-      // and there they are on the pavement
-      const [dx, dz] = this._local(s * 1.5, 0.15);
-      const fig = peds.addRider(dx, dz, ego.yaw + (s > 0 ? -Math.PI / 2 : Math.PI / 2), pass.look);
-      fig.sink = 1;
-      fig.onRoad = side === 'L';
-      yield this._tween(0.4, (k) => (fig.sink = 1 - k));
-      const away = () => {
-        fig.onRoad = false;
-        if (zt.block) peds.release(fig, zt.block);
-        else {
-          // the promenade: stroll off along the water
-          const dir = Math.random() < 0.5 ? 1 : -1;
-          peds.walkTo(fig, zt.cx + zt.nx * 4, zt.cz + dir * 70, 1.25, (p) => peds.remove(p));
-        }
-      };
-      if (side === 'L') {
-        // round the front of the car to the kerb, in the background while the door closes
-        peds.walkTo(fig, ...this._local(-1.6, -3.1), 1.35, () => peds.walkTo(fig, ...this._local(1.7, -3.1), 1.35, away));
-      } else {
-        peds.walkTo(fig, zt.cx + zt.nx * 2.2, zt.cz + zt.nz * 2.2, 1.25, away);
+    // and there they are on the pavement
+    const [dx, dz] = this._local(1.5, 0.15);
+    const fig = peds.addRider(dx, dz, ego.yaw - Math.PI / 2, pass.look);
+    fig.sink = 1;
+    yield this._tween(0.4, (k) => (fig.sink = 1 - k));
+    const away = () => {
+      if (zt.block) peds.release(fig, zt.block);
+      else {
+        // the promenade: stroll off along the water
+        const dir = Math.random() < 0.5 ? 1 : -1;
+        peds.walkTo(fig, zt.cx + zt.nx * 4, zt.cz + dir * 70, 1.25, (p) => peds.remove(p));
       }
-      yield 0.5;
-      cabin.setDoor(side, false);
-      audio.play('door_close', { pan: s * 0.5 });
-      yield 1.35;
-    }
+    };
+    peds.walkTo(fig, ...peds.clear(zt.cx + zt.nx * 2.2, zt.cz + zt.nz * 2.2), 1.25, away);
+    yield 0.5;
+    cabin.setDoor('R', false);
+    audio.play('door_close', { pan: 0.5 });
+    yield 1.35;
     ego.hazard = false;
 
     // the fare
@@ -450,17 +433,16 @@ export class Rides {
     }
 
     // whoever is waiting flags the cab down as it comes up the street
-    if (this.state === 'toPickup' && this.ride) {
+    if (this.state === 'toPickup' && this.ride && this.figure) {
       const zf = this.ride.fromZone;
       const d = Math.hypot(ego.x - zf.cx, ego.z - zf.cz);
-      for (const f of this.figures) f.wave = d < 42 && d > 6 ? 1 : 0;
+      this.figure.wave = d < 42 && d > 6 ? 1 : 0;
     }
 
-    // riders in their seats
-    const lean = clamp(ego.latAcc * 0.022, -0.09, 0.09), pitch = clamp(-ego.acc * 0.012, -0.03, 0.05);
-    for (const side of ['L', 'R']) {
-      const p = this.seats[side];
-      if (!p) continue;
+    // the rider in their seat: looks out of the window now and then, and toward the screen when the car speaks
+    const p = this.seat;
+    if (p) {
+      const lean = clamp(ego.latAcc * 0.022, -0.09, 0.09), pitch = clamp(-ego.acc * 0.012, -0.03, 0.05);
       const mine = audio.speaking === p.look.voice;
       const other = audio.speaking && !mine;
       const gaze = Math.sin(g.time * 0.11 + p.seed) > 0.55 ? -0.9 : 0;

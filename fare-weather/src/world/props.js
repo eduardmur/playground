@@ -64,6 +64,7 @@ export class Props {
     this.city = city;
     this.group = new THREE.Group();
     this.lamps = [];
+    this.solid = []; // { x, z, r }: everything that stands on a pavement, for whoever walks there (sim/pedestrians.js)
     const rnd = mulberry32(777);
     const mat = (this.material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55, metalness: 0.35 }));
 
@@ -119,6 +120,7 @@ export class Props {
         const yaw = Math.atan2(lane.rz, -lane.rx);
         poles.add(x, CURB_H, z, yaw);
         lenses.add(x, CURB_H, z, yaw);
+        this.solid.push({ x, z, r: 0.22 });
         this.lamps.push({ x: x - lane.rx * 2.6, y: CURB_H + 8.9, z: z - lane.rz * 2.6, tx: lane.tx, tz: lane.tz, rx: lane.rx, rz: lane.rz });
       }
     }
@@ -161,6 +163,7 @@ export class Props {
         const px = node.x + T.x * along + R.x * (ownHalf + 1.9), pz = node.z + T.z * along + R.z * (ownHalf + 1.9);
         const y0 = CURB_H;
         parts.push(cyl(0.1, 0.15, 6.7, px, y0 + 3.35, pz, METAL), cyl(0.2, 0.24, 0.45, px, y0 + 0.22, pz, METAL));
+        this.solid.push({ x: px, z: pz, r: 0.26 });
         // mast arm reaching out over our half of the far side
         const armLen = ownHalf + 1.9 - own.median / 2 - 0.4;
         const arm = new THREE.CylinderGeometry(0.06, 0.085, armLen, 6).rotateZ(Math.PI / 2);
@@ -282,6 +285,10 @@ export class Props {
     };
     const NEWS = [[0.05, 0.14, 0.5], [0.5, 0.05, 0.04], [0.55, 0.42, 0.03], [0.04, 0.3, 0.14], [0.5, 0.5, 0.48]];
     const adSpots = [];
+    // how much pavement each thing takes up, as circles: one, or a row of them along the street for what is long
+    const solid = (lane, x, z, r, row = [0]) => {
+      for (const d of row) this.solid.push({ x: x + lane.tx * d, z: z + lane.tz * d, r });
+    };
 
     for (const lane of city.lanes) {
       if (lane.k !== 0) continue;
@@ -290,15 +297,19 @@ export class Props {
       for (const zn of lane.zones) {
         const [x, z] = kerbPoint(lane, zn.s - 5.2, 0.45);
         kit.zone.add(x, CURB_H, z, yawAlong + Math.PI);
+        solid(lane, x, z, 0.08);
       }
       const h = (n) => hash2(lane.id * 53 + n, 911);
       // a bus shelter on the wider roads
+      let shelterAt = null;
       if (lane.road.lanes > 1 && h(1) < 0.6) {
         const s = lane.len * (0.22 + 0.2 * h(2));
         if (free(lane, s, 5)) {
           take(lane, s - 2.2); take(lane, s); take(lane, s + 2.2);
+          shelterAt = s;
           const [x, z] = kerbPoint(lane, s, 1.55);
           kit.shelter.add(x, CURB_H, z, yawRoad);
+          solid(lane, x, z, 0.8, [-1.5, -0.75, 0, 0.75, 1.5]); // nobody cuts through it: they go round the back
           const [ax, az] = kerbPoint(lane, s, 1.55);
           adSpots.push({ x: ax - lane.tx * 1.83, z: az - lane.tz * 1.83, tx: lane.tx, tz: lane.tz, rx: lane.rx, rz: lane.rz, h: h(3) });
         }
@@ -309,6 +320,7 @@ export class Props {
           take(lane, s);
           const [x, z] = kerbPoint(lane, s, 0.5);
           kit.meter.add(x, CURB_H, z, yawRoad + Math.PI);
+          solid(lane, x, z, 0.2);
         }
       }
       const count = 2 + Math.floor(h(6) * 4);
@@ -317,14 +329,16 @@ export class Props {
         const r = h(30 + k);
         const kerbSide = r < 0.62;
         if (!free(lane, s, kerbSide ? 2 : 0.1)) continue;
+        // behind a shelter the way round it has to stay open
+        if (!kerbSide && shelterAt !== null && Math.abs(s - shelterAt) < 4.4) continue;
         if (kerbSide) take(lane, s);
-        if (r < 0.2) { const [x, z] = kerbPoint(lane, s, 0.55); kit.bin.add(x, CURB_H, z, h(50 + k) * 6); }
-        else if (r < 0.3) { const [x, z] = kerbPoint(lane, s, 0.5); kit.hydrant.add(x, CURB_H, z, yawRoad); }
-        else if (r < 0.42) { const [x, z] = kerbPoint(lane, s, 0.6); kit.newsbox.add(x, CURB_H, z, yawRoad + Math.PI, 1, NEWS[Math.floor(h(70 + k) * NEWS.length)]); }
-        else if (r < 0.5) { const [x, z] = kerbPoint(lane, s, 0.65); kit.mailbox.add(x, CURB_H, z, yawRoad); }
-        else if (r < 0.62) { for (let b = -1; b <= 1; b++) { const [x, z] = kerbPoint(lane, s + b * 1.5, 0.4); kit.bollard.add(x, CURB_H, z, 0); } }
-        else if (r < 0.82) { const [x, z] = kerbPoint(lane, s, 3.85); kit.bench.add(x, CURB_H, z, yawRoad); }
-        else { const [x, z] = kerbPoint(lane, s, 3.6); kit.planter.add(x, CURB_H, z, 0); }
+        if (r < 0.2) { const [x, z] = kerbPoint(lane, s, 0.55); kit.bin.add(x, CURB_H, z, h(50 + k) * 6); solid(lane, x, z, 0.3); }
+        else if (r < 0.3) { const [x, z] = kerbPoint(lane, s, 0.5); kit.hydrant.add(x, CURB_H, z, yawRoad); solid(lane, x, z, 0.2); }
+        else if (r < 0.42) { const [x, z] = kerbPoint(lane, s, 0.6); kit.newsbox.add(x, CURB_H, z, yawRoad + Math.PI, 1, NEWS[Math.floor(h(70 + k) * NEWS.length)]); solid(lane, x, z, 0.33); }
+        else if (r < 0.5) { const [x, z] = kerbPoint(lane, s, 0.65); kit.mailbox.add(x, CURB_H, z, yawRoad); solid(lane, x, z, 0.38); }
+        else if (r < 0.62) { for (let b = -1; b <= 1; b++) { const [x, z] = kerbPoint(lane, s + b * 1.5, 0.4); kit.bollard.add(x, CURB_H, z, 0); solid(lane, x, z, 0.1); } }
+        else if (r < 0.82) { const [x, z] = kerbPoint(lane, s, 3.85); kit.bench.add(x, CURB_H, z, yawRoad); solid(lane, x, z, 0.3, [-0.6, 0, 0.6]); }
+        else { const [x, z] = kerbPoint(lane, s, 3.6); kit.planter.add(x, CURB_H, z, 0); solid(lane, x, z, 0.9); }
       }
       if (h(90) < 0.8) kit.manhole.add(lane.ax + lane.tx * lane.len * (0.2 + 0.6 * h(91)) - lane.rx * 0.5, 0, lane.az + lane.tz * lane.len * (0.2 + 0.6 * h(91)) - lane.rz * 0.5, 0);
     }

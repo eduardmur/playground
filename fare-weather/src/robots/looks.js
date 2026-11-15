@@ -14,7 +14,6 @@ export function randomLook(rnd) {
     shell: pick(rnd, SHELLS),
     build: [0.95 + rnd() * 0.12, 0.93 + rnd() * 0.13], // width, height
     brolly: pick(rnd, BROLLIES),
-    call: false,
     cake: false,
     _norm: true,
   };
@@ -28,8 +27,7 @@ export function normalizeLook(raw) {
     shell: raw.shell || SHELLS[0],
     build: raw.build || [1, 1],
     brolly: raw.brolly || BROLLIES[0],
-    // what a rider does in their seat
-    call: !!raw.call,
+    // what a rider has on their knees
     cake: !!raw.cake,
     voice: raw.voice,
     _norm: true,

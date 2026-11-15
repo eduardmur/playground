@@ -288,6 +288,7 @@ export class Hud {
   setMet() {
     const met = this.game.rides.stats.met;
     $('metCount').textContent = RIDERS.filter((r) => met[r.id]).length;
+    $('metOf').textContent = `/${RIDERS.length}`;
   }
 
   renderRiders() {
@@ -296,7 +297,7 @@ export class Hud {
     $('ridersSub').textContent = metN === RIDERS.length ? 'You have met everyone. They will ride again.' : `${metN} of ${RIDERS.length} met. Some only ride at certain hours.`;
     $('riderGrid').innerHTML = RIDERS.map((r) => {
       const met = !!st.met[r.id];
-      const name = r.party.map((p) => VOICES[p.voice].name).join(' & ');
+      const name = VOICES[r.id].name;
       const where = `${city.poi[r.from].name} → ${city.poi[r.to].name}`;
       const when = r.hours ? `Rides between ${hourText(r.hours[0])} and ${hourText(r.hours[1])}.` : 'Rides at any hour.';
       return `<div class="rider ${met ? 'met' : ''}">

@@ -4,7 +4,7 @@
 // scripts/build-prompts.mjs turns the same text into ElevenLabs prompts.
 //
 // Text in [square brackets] is a delivery cue for the voice model; it is never
-// shown in subtitles. Lines are spoken in order; `who` names a voice below.
+// shown in subtitles.
 
 /**
  * Voices. `design` is a prompt for ElevenLabs Voice Design. The riders are robots, but nobody in this
@@ -36,356 +36,217 @@ export const VOICES = {
 };
 
 /**
- * Riders. Each ride is three short recordings:
+ * Riders. One robot to a ride, and nobody makes conversation: each says a few short things,
+ * mostly to themselves, and each of those is its own recording:
  *   hello  as they get in
- *   scene  a minute or so into the trip
+ *   lines  now and then on the way
  *   bye    as they get out
- * `hours` limits a ride to part of the day: [from, to], wrapping past midnight.
- * `call` means the scene is one side of a call (the rider holds a hand to the side of the head).
+ * A rider's id is also the id of their voice above. `hours` limits a ride to part of the day:
+ * [from, to], wrapping past midnight. `call` means the lines are one side of a call: the rider
+ * holds a hand to the side of the head while it lasts, and lowers it when it is over.
  *
- * The robots all look much alike, so a member of a party is described only by
- * `frame` (the build: 'a' broad, 'b' slight), an optional `build` ([width, height]),
- * and what they do in their seat.
+ * The robots all look much alike, so `look` is only the `frame` (the build: 'a' broad, 'b' slight),
+ * an optional `build` ([width, height]), and anything they carry.
  */
 export const RIDERS = [
   {
-    id: 'maya', color: '#e0795b', from: 'tower', to: 'cafe', hours: [8, 20],
-    party: [{ voice: 'maya', frame: 'b', call: true }],
+    id: 'maya', color: '#e0795b', from: 'tower', to: 'cafe', hours: [8, 20], call: true,
+    look: { frame: 'b' },
     memory: 'Asked where she sees herself in five years, she said "still under warranty". They laughed. She hears on Friday.',
-    hello: [
-      { who: 'nim', text: 'Hi, Maya. Juniper Café?' },
-      { who: 'maya', text: '[exhales] Yes. Please. Hi.' },
+    hello: '[exhales] Okay. Okay, okay.',
+    lines: [
+      'Mom. Hi. Yeah, I just got out.',
+      "I said 'still under warranty'. And they laughed.",
+      'The real laugh. ...Friday. They said Friday.',
     ],
-    scene: [
-      { who: 'maya', text: 'Mom. Hi. ... Yeah, I just got out.' },
-      { who: 'maya', text: "I don't know! I think... good? They asked where I see myself in five years, and I said 'still under warranty', and they LAUGHED. The real laugh, not the polite one." },
-      { who: 'maya', text: 'No, I did NOT reboot. Mom. That was one time.' },
-      { who: 'maya', text: '[laughs] Okay. Okay. ... They said Friday.' },
-      { who: 'maya', text: "I'm in one of those cars with no driver. ... No, nobody. It's just driving." },
-      { who: 'maya', text: "I know. I know it's weird. It's weirdly polite, actually." },
-      { who: 'maya', text: "I'll call you Friday. Love you. Bye. [exhales] ...Okay." },
-    ],
-    bye: [
-      { who: 'maya', text: 'Thanks. Um... wish me luck?' },
-      { who: 'nim', text: 'Good luck, Maya.' },
-    ],
+    bye: 'Wish me luck.',
   },
   {
     id: 'okafor', color: '#7a9e7e', from: 'station', to: 'terrace',
-    party: [{ voice: 'okafor', frame: 'a', build: [1.04, 0.99] }],
+    look: { frame: 'a', build: [1.04, 0.99] },
     memory: 'Thirty-one years at the wheel of a cab in this city, until the cabs lost their wheels. "All right," he said. "You\'ll do."',
-    hello: [
-      { who: 'okafor', text: '[chuckles] Well. Look at this. Nobody home.' },
-      { who: 'nim', text: "Hello, Mr. Okafor. I'm home. Marlowe Terrace?" },
+    hello: '[chuckles] Well. Nobody home.',
+    lines: [
+      'Thirty-one years I drove a cab in this city.',
+      'Loud, it was. Everybody talking.',
+      "...Fir IS faster. [laughs] All right. You'll do.",
     ],
-    scene: [
-      { who: 'okafor', text: 'Thirty-one years I drove a cab in this city. You know that? They built me for it.' },
-      { who: 'nim', text: "I didn't. What was it like?" },
-      { who: 'okafor', text: 'Loud. [laughs] Everybody talking. Telling me their breakdowns, their boss, their maker. I knew this city by its complaints.' },
-      { who: 'nim', text: 'They still talk in here. I mostly listen.' },
-      { who: 'okafor', text: 'Mm. That is the job. That was always the job. ... You take Cedar at this hour?' },
-      { who: 'nim', text: 'Fir is faster right now.' },
-      { who: 'okafor', text: '...Fir IS faster. [laughs] All right. All right. You will do.' },
-    ],
-    bye: [
-      { who: 'okafor', text: 'You keep your sensors clean out there.' },
-      { who: 'nim', text: 'Always. Take care, Mr. Okafor.' },
-    ],
+    bye: 'Keep your sensors clean out there.',
   },
   {
-    id: 'priya_theo', color: '#b06fd6', from: 'foundry', to: 'diner', hours: [19, 3.5],
-    party: [
-      { voice: 'priya', frame: 'b', build: [0.97, 0.96] },
-      { voice: 'theo', frame: 'a' },
+    id: 'priya', color: '#b06fd6', from: 'foundry', to: 'cobalt', hours: [19, 3.5],
+    look: { frame: 'b', build: [0.97, 0.96] },
+    memory: 'Came out of the show with her audio still clipping. The second song was worth it.',
+    hello: "Empty. I told him it'd be empty.",
+    lines: [
+      "My audio's still clipping.",
+      "That's how you know it was loud.",
+      '[softly] ...That second song, though.',
     ],
+    bye: 'Thanks, Nim.',
+  },
+  {
+    id: 'theo', color: '#8f7fd0', from: 'foundry', to: 'diner', hours: [19, 3.5],
+    look: { frame: 'a' },
     memory: 'A full charge after the show, because time is not real in a diner.',
-    hello: [
-      { who: 'theo', text: "Okay, it's actually empty." },
-      { who: 'priya', text: 'I TOLD you. Get in.' },
-      { who: 'nim', text: 'Hi, Priya. Hi, Theo. Night Owl Diner?' },
-      { who: 'priya', text: 'Yes, please!' },
+    hello: "Huh. It's actually empty.",
+    lines: [
+      "...I didn't hate that.",
+      'A full charge. And the warm oil.',
+      "It's a diner. Time isn't real there.",
     ],
-    scene: [
-      { who: 'priya', text: 'My audio is still clipping.' },
-      { who: 'theo', text: "That's how you know it was good." },
-      { who: 'priya', text: "That's how you know it was LOUD. Different thing." },
-      { who: 'theo', text: 'The second song, though. When the lights went out and everyone just...' },
-      { who: 'priya', text: '[softly] Yeah.' },
-      { who: 'theo', text: "...I didn't hate that." },
-      { who: 'priya', text: "[laughs] High praise. Put it on the poster. 'I didn't hate that.' Theo." },
-      { who: 'theo', text: "I'm getting a full charge. And the warm oil." },
-      { who: 'priya', text: 'You charged at six.' },
-      { who: 'theo', text: "It's a diner. Time isn't real there." },
-    ],
-    bye: [
-      { who: 'theo', text: 'Thanks, car.' },
-      { who: 'priya', text: 'It has a name.' },
-      { who: 'theo', text: '...Thanks, Nim.' },
-      { who: 'nim', text: 'Enjoy the warm oil.' },
-    ],
+    bye: 'Thanks, car. ...Nim. Thanks, Nim.',
   },
   {
-    id: 'lena', color: '#6aa6c9', from: 'hospital', to: 'cobalt',
-    party: [{ voice: 'lena', frame: 'b', call: true }],
-    memory: 'Mr. Abara walked out of the clinic on his own two legs. Best thing anyone said to her all month.',
-    hello: [
-      { who: 'nim', text: 'Hi, Lena. Home to the Cobalt?' },
-      { who: 'lena', text: '[sighs] Please. Slowly is fine.' },
+    id: 'lena', color: '#6aa6c9', from: 'hospital', to: 'cobalt', call: true,
+    look: { frame: 'b' },
+    memory: 'Mr. Abara walked out of the clinic on his own two legs. Best thing she saw all month.',
+    hello: '[sighs] Home. Slowly is fine.',
+    lines: [
+      "Jo. It's me. Long one today.",
+      'Mr. Abara walked out. On his own two legs.',
+      "[laughs softly] ...It's so quiet I can hear my own fans.",
     ],
-    scene: [
-      { who: 'lena', text: "Hey, Jo. It's me. Voice memo, because if I type I'll go to standby halfway through." },
-      { who: 'lena', text: 'Long one today. Twelve hours turned into fourteen.' },
-      { who: 'lena', text: "But, um... Mr. Abara went home. Walked out on his own two legs. I didn't think he would, three weeks ago." },
-      { who: 'lena', text: "He stopped at the desk and said, 'Don't take this the wrong way, but I hope I never see you again.'" },
-      { who: 'lena', text: "[laughs softly] Best thing anyone's said to me all month." },
-      { who: 'lena', text: "Anyway. I'm in a car with no driver, and it's so quiet I can hear my own fans. Call me Sunday. Love you." },
-    ],
-    bye: [
-      { who: 'lena', text: 'Thank you. That was the quietest part of my day.' },
-      { who: 'nim', text: 'Rest well, Lena.' },
-    ],
+    bye: 'Quietest part of my day.',
   },
   {
     id: 'gus', color: '#e2b23c', from: 'studio', to: 'theater', hours: [15, 23.5],
-    party: [{ voice: 'gus', frame: 'a', build: [1.03, 1.0] }],
-    memory: '"The confusion is accurate." Worst review he ever got. He is keeping it.',
-    hello: [
-      { who: 'gus', text: "Hey! You're a captive audience, right? You can't leave?" },
-      { who: 'nim', text: "Hi, Gus. I can't leave. The Orpheum?" },
+    look: { frame: 'a', build: [1.03, 1.0] },
+    memory: 'Tried the new bit on an empty cab. Tough room. He is keeping it.',
+    hello: 'A captive audience. Perfect.',
+    lines: [
+      'Okay. Okay. New bit.',
+      "No driver. And I STILL don't know how much to tip.",
+      '...Nothing? Tough room.',
     ],
-    scene: [
-      { who: 'gus', text: "Okay. Okay. New bit. Tell me if it's funny." },
-      { who: 'nim', text: "I'll try. I should say, I've never laughed." },
-      { who: 'gus', text: 'Perfect. Tough room. So... I got in a taxi with no driver. And I STILL did not know how much to tip.' },
-      { who: 'gus', text: '...Nothing?' },
-      { who: 'nim', text: "I'm thinking about it. There is no tip button. So the confusion is... accurate." },
-      { who: 'gus', text: "[laughs] 'The confusion is accurate.' That's the worst review I have ever gotten. I'm keeping it." },
-      { who: 'nim', text: "For what it's worth, the pause before 'still' is doing a lot of the work." },
-      { who: 'gus', text: "...Okay, THAT is a note. That's actually a note." },
-    ],
-    bye: [
-      { who: 'gus', text: 'Wish me luck. Or, you know. Whatever it is cars do.' },
-      { who: 'nim', text: 'Break a leg, Gus. The clinic is open late.' },
-    ],
+    bye: 'Wish me luck. Or whatever it is cars do.',
   },
   {
-    id: 'june', color: '#d98aa4', from: 'market', to: 'lofts', hours: [9, 20],
-    party: [{ voice: 'june', frame: 'b', build: [1, 0.94], call: true }],
-    memory: 'Warm oil for a grandson running hot, and a grandfather who took corners like he was angry at them.',
-    hello: [
-      { who: 'june', text: 'Hello? Is someone... oh. It talks.' },
-      { who: 'nim', text: 'Hello, June. I do. Harbor Lofts?' },
-      { who: 'june', text: 'Yes, dear. Mind the flask.' },
+    id: 'june', color: '#d98aa4', from: 'market', to: 'lofts', hours: [9, 20], call: true,
+    look: { frame: 'b', build: [1, 0.94] },
+    memory: 'Warm oil for a grandson running hot, and a smoother ride than his grandfather ever gave her.',
+    hello: 'Oh. It drives itself. Mind the flask.',
+    lines: [
+      "Daniel. Don't 'I'm fine' me, I can hear your fan.",
+      "I'm bringing oil. The good one. Warm.",
+      'Smoother than your grandfather ever drove. [laughs]',
     ],
-    scene: [
-      { who: 'june', text: "Daniel. It's your grandmother. ... Don't 'I'm fine' me, I can hear your fan." },
-      { who: 'june', text: "I'm bringing oil. ... Yes, the good one. Warm." },
-      { who: 'june', text: "No, you don't come down. You stay on the charger. I have a key." },
-      { who: 'june', text: "I'm in one of those little cars that drives itself. ... It's very smooth." },
-      { who: 'june', text: 'Smoother than your grandfather ever drove, rest him. He took corners like he was angry at them. [laughs]' },
-      { who: 'june', text: "Ten minutes. Put the warmer on. No... don't get up. I'll put the warmer on." },
-    ],
-    bye: [
-      { who: 'june', text: 'Thank you, dear. You drive beautifully.' },
-      { who: 'nim', text: 'Thank you, June. I hope Daniel is running cooler soon.' },
-    ],
+    bye: 'Thank you, dear. Beautifully driven.',
   },
   {
     id: 'sam', color: '#58b89a', from: 'library', to: 'hall', hours: [7, 22],
-    party: [{ voice: 'sam', frame: 'b', build: [0.95, 0.95] }],
+    look: { frame: 'b', build: [0.95, 0.95] },
     memory: 'Intercalation. Got it right, and was still sure of failing.',
-    hello: [
-      { who: 'sam', text: "Hi, hi, hi. Sorry. I'm late, I'm so late." },
-      { who: 'nim', text: "Hi, Sam. Northgate Hall. We'll make it." },
+    hello: "Late. I'm late, I'm so late.",
+    lines: [
+      'The cell is the powerhouse of the robot.',
+      'Lithium goes in. Inter... [groans] ...calation.',
+      "...I'm going to fail.",
     ],
-    scene: [
-      { who: 'sam', text: 'Okay. Can you quiz me? You have, like, all the knowledge, right?' },
-      { who: 'nim', text: "Some of it. What's the subject?" },
-      { who: 'sam', text: 'Cell chemistry. Ask me what the cell is.' },
-      { who: 'nim', text: 'What is the cell?' },
-      { who: 'sam', text: "It's the powerhouse of the robot!" },
-      { who: 'nim', text: '...And?' },
-      { who: 'sam', text: "And... that's what everyone says." },
-      { who: 'nim', text: 'It is. What happens at the cathode when it discharges?' },
-      { who: 'sam', text: 'Lithium... goes... in. Inter... [groans] ...calation.' },
-      { who: 'nim', text: "That's right." },
-      { who: 'sam', text: "I'm going to fail." },
-      { who: 'nim', text: 'You just got it right.' },
-      { who: 'sam', text: '...Huh. Ask me another one.' },
-    ],
-    bye: [
-      { who: 'sam', text: "Okay. Okay. I've got this." },
-      { who: 'nim', text: "You've got this, Sam." },
-    ],
+    bye: "Okay. Okay. I've got this.",
   },
   {
     id: 'rafael', color: '#c7714a', from: 'records', to: 'park', hours: [10, 21.5],
-    party: [{ voice: 'rafael', frame: 'a' }],
+    look: { frame: 'a' },
     memory: 'He had a whole speech and forgot it on purpose. He kept the last line.',
-    hello: [
-      { who: 'nim', text: 'Hi, Rafael. Linden Park?' },
-      { who: 'rafael', text: 'Yep. Yes. Linden Park. [exhales] Okay.' },
+    hello: 'Linden Park. [exhales] Okay.',
+    lines: [
+      "'Dani. I had a whole speech.'",
+      "[whispers] Ring. Ring... compartment. It's in the compartment.",
+      "'Just the last line.' [exhales] Yeah. That's the one.",
     ],
-    scene: [
-      { who: 'rafael', text: "Okay. 'Dani. Four years ago you spilled an entire can of coolant down my back.' ...No. Too... no." },
-      { who: 'rafael', text: "'Dani. I had a whole speech.' ...That's cute. She'll like that." },
-      { who: 'rafael', text: "'I had a whole speech, and I practiced it in a taxi with nobody in it...' [laughs nervously] Which is true. Hi." },
-      { who: 'rafael', text: "'...and I forgot all of it. So. Just the last line.'" },
-      { who: 'rafael', text: "[whispers] Ring. Ring, ring, ring... okay. Compartment. It's in the compartment. It was always in the compartment." },
-      { who: 'rafael', text: "'Just the last line.' [exhales] Yeah. That's the one." },
-    ],
-    bye: [
-      { who: 'rafael', text: "If I come back alone, don't say anything." },
-      { who: 'nim', text: "You won't. Go on." },
-    ],
+    bye: 'Okay. Here goes.',
   },
   {
-    id: 'bea_tom', color: '#5c8fd6', from: 'pier', to: 'hotel', hours: [8, 22],
-    party: [
-      { voice: 'bea', frame: 'b', build: [1.04, 0.95] },
-      { voice: 'tom', frame: 'a', build: [1.06, 1.0] },
+    id: 'bea', color: '#5c8fd6', from: 'pier', to: 'hotel', hours: [8, 22],
+    look: { frame: 'b', build: [1.04, 0.95] },
+    memory: 'On holiday and reviewing everything: the street names, the smell of warm oil, the cab.',
+    hello: 'No driver! Tom would hate this.',
+    lines: [
+      "Ooh, 'Ginkgo Street'. How do you even say that?",
+      'It all smells of warm oil. Lovely.',
+      "I'm going to write a review.",
     ],
-    memory: 'On holiday, judging diners by smell. Fair.',
-    hello: [
-      { who: 'tom', text: 'After you.' },
-      { who: 'bea', text: "There's no driver, Tom." },
-      { who: 'tom', text: 'I can see that, Bea.' },
-      { who: 'nim', text: 'Hello, Bea. Hello, Tom. Hotel Alto?' },
+    bye: 'Lovely. Just lovely.',
+  },
+  {
+    id: 'tom', color: '#7d8fb0', from: 'market', to: 'hotel', hours: [8, 22],
+    look: { frame: 'a', build: [1.06, 1.0] },
+    memory: 'Sent across town for the good oil. Liked the ride more than he will admit to Bea.',
+    hello: 'After you. ...Ah. Nobody.',
+    lines: [
+      'The good oil, she said. Other side of town.',
+      "She'll have reviewed the hotel by now.",
+      "...Very smooth, this. I'll not tell her.",
     ],
-    scene: [
-      { who: 'bea', text: 'Ask it where the good oil is.' },
-      { who: 'tom', text: "It's a car, Bea." },
-      { who: 'bea', text: 'It lives here. Excuse me! Where do YOU fill up?' },
-      { who: 'nim', text: 'At the depot. But everyone leaves the Night Owl Diner very happy, and they smell like warm oil.' },
-      { who: 'bea', text: 'See? Local knowledge.' },
-      { who: 'tom', text: "It's judging diners by smell." },
-      { who: 'bea', text: "That's how I judge diners." },
-      { who: 'tom', text: "...That's fair." },
-      { who: 'bea', text: "And what's that street? 'Gink... Ginko'?" },
-      { who: 'nim', text: 'Ginkgo. Everyone gets it wrong. Even the sign, once.' },
-    ],
-    bye: [
-      { who: 'bea', text: 'Lovely chatting with you!' },
-      { who: 'tom', text: "She means it. She'll write a review." },
-      { who: 'nim', text: 'Enjoy the city.' },
-    ],
+    bye: 'Ta. Very smooth.',
   },
   {
     id: 'noor', color: '#8a8fa8', from: 'cobalt', to: 'pier',
-    party: [{ voice: 'noor', frame: 'b' }],
+    look: { frame: 'b' },
     memory: 'Five quiet minutes, all hers.',
-    hello: [
-      { who: 'nim', text: 'Hi, Noor. Pier Seven?' },
-      { who: 'noor', text: '[quietly] Yeah.' },
+    hello: '[quietly] Pier Seven.',
+    lines: [
+      '[exhales] ...What a day.',
+      'Everything I touched threw an error.',
+      '[exhales] ...Okay. ...Okay.',
     ],
-    scene: [
-      { who: 'noor', text: 'Can I ask you something?' },
-      { who: 'nim', text: 'Of course.' },
-      { who: 'noor', text: "Do you mind if I don't talk?" },
-      { who: 'nim', text: 'Not at all.' },
-      { who: 'noor', text: "[exhales] ...It's just been a day. Everything I touched threw an error." },
-      { who: 'nim', text: "We have about five minutes. They're all yours." },
-      { who: 'noor', text: '[exhales] [laughs softly] Okay. ...Okay. Thanks.' },
-    ],
-    bye: [
-      { who: 'noor', text: "That helped. I don't know why." },
-      { who: 'nim', text: 'Take care of yourself, Noor.' },
-    ],
+    bye: "That helped. I don't know why.",
   },
   {
-    id: 'dev', color: '#4fb0c6', from: 'hotel', to: 'station', hours: [6, 19],
-    party: [{ voice: 'dev', frame: 'a', call: true }],
-    memory: 'Four months of charge left in the company, and a product robots actually like. He is getting on a train, not giving up.',
-    hello: [
-      { who: 'dev', text: 'Hello, hello!' },
-      { who: 'nim', text: 'Hi, Dev. Central Station?' },
-      { who: 'dev', text: "That's the one." },
+    id: 'dev', color: '#4fb0c6', from: 'hotel', to: 'station', hours: [6, 19], call: true,
+    look: { frame: 'a' },
+    memory: 'Four months of charge left in the company, and a product robots actually like.',
+    hello: "Station. Hello, hello. Let's go.",
+    lines: [
+      "Hey! Yes! Can you hear me? I'm in a robotaxi.",
+      'The numbers are... a journey. Up. If you squint.',
+      'Four months. And a product robots actually like.',
     ],
-    scene: [
-      { who: 'dev', text: "Hey! Yes! Can you hear me? I'm in a robotaxi." },
-      { who: 'dev', text: "No, it's great. Honestly, it's a better listener than my board. [laughs]" },
-      { who: 'dev', text: 'So. The numbers. The numbers are... the numbers are a journey.' },
-      { who: 'dev', text: 'Up. Mostly up. If you squint.' },
-      { who: 'dev', text: '[sighs] Look... can I be honest? We have four months. Four months, and a product robots actually like. Which is three more months than last time.' },
-      { who: 'dev', text: "Yeah. ... Yeah, I know. ... No, I'm not powering down. I'm getting on a train. Different thing. Talk Thursday." },
-    ],
-    bye: [
-      { who: 'dev', text: "Thanks. You didn't ask me a single hard question." },
-      { who: 'nim', text: 'Safe travels, Dev.' },
-    ],
+    bye: 'Not one hard question. Thank you.',
   },
   {
     id: 'hana', color: '#e39a4a', from: 'terrace', to: 'bakery', hours: [4.5, 8.5],
-    party: [{ voice: 'hana', frame: 'b', build: [0.98, 0.94] }],
+    look: { frame: 'b', build: [0.98, 0.94] },
     memory: 'Cells that formed all night. "The first warm thing of the day."',
-    hello: [
-      { who: 'hana', text: '[yawns] Morning, car.' },
-      { who: 'nim', text: 'Good morning, Hana. Sunrise Bakery?' },
-      { who: 'hana', text: 'Where else.' },
+    hello: '[yawns] Morning.',
+    lines: [
+      'Nobody awake but us.',
+      'The cells have been forming all night.',
+      'The first warm thing of the day.',
     ],
-    scene: [
-      { who: 'hana', text: 'You know nobody is awake right now except you and me.' },
-      { who: 'nim', text: 'And a street sweeper on Cedar.' },
-      { who: 'hana', text: '[laughs] And him. Three of us. Holding the city up.' },
-      { who: 'nim', text: 'What do you make first?' },
-      { who: 'hana', text: "Cells. They've been forming all night. You should hold one when the oven door opens. ...Oh. Sorry." },
-      { who: 'nim', text: "It's all right. I like hearing about it." },
-      { who: 'hana', text: "It's warm right through. Like... the first warm thing of the day." },
-      { who: 'nim', text: "I'll remember that. In my way." },
-    ],
-    bye: [
-      { who: 'hana', text: "Come by at seven. I'll leave a fresh one on the curb for you." },
-      { who: 'nim', text: "I'll drive past slowly." },
-    ],
+    bye: 'Come by at seven.',
   },
   {
     id: 'kit', color: '#f08a7c', from: 'bakery', to: 'hotel', hours: [9, 19],
-    party: [{ voice: 'kit', frame: 'a', cake: true }],
+    look: { frame: 'a', cake: true },
     memory: 'Three tiers of buttercream across town, for a wedding where nobody can eat it. Not a crumb out of place.',
-    hello: [
-      { who: 'kit', text: "Okay, hi, nobody panic. I'm holding a cake." },
-      { who: 'nim', text: "Hi, Kit. Hotel Alto. I'll be gentle." },
+    hello: "Nobody panic. I'm holding a cake.",
+    lines: [
+      'Three tiers. And nobody there can even eat it.',
+      '[whispers] Oh no. Oh no, a turn...',
+      '[exhales] ...Oh. That was nothing.',
     ],
-    scene: [
-      { who: 'kit', text: "Three tiers. Real buttercream. Nobody at this wedding can eat it, and it STILL has to be perfect. If you brake hard, I lose my job, and you lose... I don't know what you have. Your rating." },
-      { who: 'nim', text: 'My rating is important to me.' },
-      { who: 'kit', text: 'Good. Shared stakes.' },
-      { who: 'nim', text: "There's a turn coming up. I'm going to take it at walking pace." },
-      { who: 'kit', text: '[whispers] Oh no. Oh no, oh no... [exhales] Oh. Oh, that was nothing.' },
-      { who: 'nim', text: 'Thank you.' },
-      { who: 'kit', text: "You're hired. Can you do weddings every weekend?" },
-      { who: 'nim', text: "I'd have to check with dispatch." },
-    ],
-    bye: [
-      { who: 'kit', text: "Not a crumb out of place. You're a hero." },
-      { who: 'nim', text: 'Congratulations to the couple.' },
-    ],
+    bye: 'Not a crumb out of place.',
   },
   {
     id: 'ellis', color: '#9bb0c9', from: 'lofts', to: 'diner', hours: [21, 4.5],
-    party: [{ voice: 'ellis', frame: 'b', build: [0.98, 0.98] }],
+    look: { frame: 'b', build: [0.98, 0.98] },
     memory: '"The city was mostly a weather report." Three days stuck on that sentence, and then she was not.',
-    hello: [
-      { who: 'ellis', text: "Evening. Don't tell anyone I'm off the charger." },
-      { who: 'nim', text: "Your secret's safe, Ellis. Night Owl Diner?" },
+    hello: "Don't tell anyone I'm off the charger.",
+    lines: [
+      "'The city was...' The city was WHAT.",
+      "Wet? That's not literature. That's a weather report.",
+      "...'Mostly a weather report.' Huh. Hang on.",
     ],
-    scene: [
-      { who: 'ellis', text: "I've been stuck on the same sentence for three days." },
-      { who: 'nim', text: "What's the sentence?" },
-      { who: 'ellis', text: "'The city was...' and then nothing. The city was WHAT." },
-      { who: 'nim', text: 'Awake?' },
-      { who: 'ellis', text: 'Too easy.' },
-      { who: 'nim', text: 'Wet?' },
-      { who: 'ellis', text: "[laughs] That's not literature. That's a weather report." },
-      { who: 'nim', text: 'I am mostly a weather report.' },
-      { who: 'ellis', text: "...'The city was mostly a weather report.' Huh. Hang on. Hang on, don't talk." },
-    ],
-    bye: [
-      { who: 'ellis', text: "You're getting an acknowledgment. Small print." },
-      { who: 'nim', text: "I'll look for it." },
-    ],
+    bye: "You're in the acknowledgments. Small print.",
   },
 ];
+
+/** A rider's recordings in the order they are heard: [[clip, text], ...]. The clip names the file. */
+export function clipsOf(rider) {
+  return [['hello', rider.hello], ...rider.lines.map((text, i) => [String(i + 1), text]), ['bye', rider.bye]];
+}
 
 /** Things the car says on its own. `when` tells the ride script what each is for. */
 export const CAR_LINES = [
