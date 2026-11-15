@@ -1,8 +1,8 @@
-# Fare Weather
+# Robotaxi
 
 A lofi robotaxi shift in a city of robots. Nobody is driving and nobody says a word: you ride along in a driverless cab as it picks robots up, one at a time, and takes them where they are going, with the road, the weather and the radio for company. Change the sky whenever you like.
 
-**Play it: https://eduardmur.github.io/playground/fare-weather/**
+**Play it: https://eduardmur.github.io/playground/robotaxi/**
 
 ![The view from inside the cab, heading west into a low sun at the end of the street](screenshots/1-golden-hour.jpg)
 

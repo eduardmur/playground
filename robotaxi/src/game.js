@@ -132,7 +132,7 @@ export class Game {
     this.audio.onTrack = (title) => this.hud.setTrack(title);
     this.rides.onFare = (f2) => this.hud.fare(f2);
     this.rides.onMet = (ride, first) => this.hud.met(ride, first);
-    this.rides._setStatus({ label: 'Online', headline: 'Fare Weather', sub: '' });
+    this.rides._setStatus({ label: 'Online', headline: 'Robotaxi', sub: '' });
     this.ego.onBlink = (on) => this.audio.play('blinker', { rate: on ? 1 : 0.82, gain: this.ego.hazard ? 0.45 : 1 });
     this.cabin.onWipe = (dir) => this.audio.play('wiper', { rate: dir > 0 ? 1 : 0.9, gain: 0.8 });
     this.traffic.onPass = (car, rel) => {

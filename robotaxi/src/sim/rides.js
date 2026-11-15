@@ -8,7 +8,7 @@ import { normalizeLook } from '../robots/looks.js';
 import { clamp, clockText, lerp, easeInOut } from '../core/utils.js';
 
 const NAMES = ['Alex', 'Jordan', 'Riley', 'Casey', 'Morgan', 'Avery', 'Quinn', 'Rowan', 'Sasha', 'Devon', 'Elliot', 'Harper', 'Jules', 'Kai', 'Lane', 'Micah', 'Noa', 'Reese', 'Sky', 'Tatum'];
-const SAVE_KEY = 'fare-weather.save';
+const SAVE_KEY = 'robotaxi.save';
 
 const rand = (a, b) => a + Math.random() * (b - a);
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
@@ -25,7 +25,7 @@ export class Rides {
     this.arrived = false;
     this.seat = null; // the rider in the cab: there is only ever one, in the right-hand seat
     this.figure = null; // the same rider out on the pavement
-    this.status = { label: '', headline: 'Fare Weather', sub: '', rider: null, riderColor: null };
+    this.status = { label: '', headline: 'Robotaxi', sub: '', rider: null, riderColor: null };
     this.statusT = 0;
     this.lastId = null;
     this.sinceStranger = 0;

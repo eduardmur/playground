@@ -1,8 +1,8 @@
 {
-  "name": "fare-weather",
+  "name": "robotaxi",
   "private": true,
   "version": "1.0.0",
-  "description": "A lofi robotaxi shift in a city of robots. Ride along in a driverless cab, pick robots up, listen in, and change the sky. Built with Three.js.",
+  "description": "A lofi shift in a driverless cab in a city of robots. Ride along as it picks robots up, and change the sky. Built with Three.js.",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -19,7 +19,7 @@
     "vite": "^7.0.0"
   },
   "playground": {
-    "title": "Fare Weather",
+    "title": "Robotaxi",
     "tags": [
       "game",
       "3D",

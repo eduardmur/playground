@@ -95,7 +95,7 @@ export class AudioEngine {
     this.vol = { master: 0.9, music: 0.6, ambience: 0.8 };
     try {
       // whatever was saved, by this version or an older one with more sliders: only the ones there are now
-      const saved = JSON.parse(localStorage.getItem('fare-weather.volume') || '{}');
+      const saved = JSON.parse(localStorage.getItem('robotaxi.volume') || '{}');
       for (const k of Object.keys(this.vol)) if (typeof saved[k] === 'number') this.vol[k] = clamp01(saved[k]);
     } catch {
       /* fine */
@@ -180,7 +180,7 @@ export class AudioEngine {
     this.vol[name] = clamp01(value);
     this._applyVolumes();
     try {
-      localStorage.setItem('fare-weather.volume', JSON.stringify(this.vol));
+      localStorage.setItem('robotaxi.volume', JSON.stringify(this.vol));
     } catch {
       /* fine */
     }
