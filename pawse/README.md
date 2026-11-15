@@ -11,7 +11,7 @@ A quiet day at the dog park. You are a dog. There is nowhere you need to be.
 | ![Four dogs playing in a meadow of wildflowers](screenshots/2-friends.jpg) | ![Two dogs howling by the fountain plaza at night, under street lamps](screenshots/3-night.jpg) |
 | Making friends in the meadow | Howling at night by the fountain |
 
-Built with [Three.js](https://threejs.org/). Everything on screen and everything you hear is generated in code: there are no models, textures or audio files.
+Built with [Three.js](https://threejs.org/). Everything on screen is generated in code: there are no models or textures. The sounds and the music were recorded with [ElevenLabs](https://elevenlabs.io/) (sound effects and music models; the prompts are in `src/audio/manifest.js`), and the game falls back to its own synthesised versions wherever a recording is missing.
 
 ## Run it
 
@@ -22,7 +22,18 @@ npm run dev
 
 Then open the address Vite prints (http://localhost:5173 by default). `npm run build` writes a static site to `dist/` that can be hosted anywhere.
 
-`npm run build:artifact` packs the game into a single page (`dist/pawse-artifact.html`) for publishing as a claude.ai Artifact: all of the game's own code and styles are inlined, and three.js is loaded from cdnjs.
+`npm run build:artifact` packs the game into a single page (`dist/pawse-artifact.html`) for publishing as a claude.ai Artifact: all of the game's own code and styles are inlined, and three.js is loaded from cdnjs. That page carries no audio files, so it plays the synthesised sounds.
+
+## Sound
+
+The recordings in `public/audio/` (16 MB of `.m4a`) are made from raw takes in `takes/`, which is not in the repository:
+
+```bash
+npm run audio:split   # cut the packed one-shots in takes/packs/ into takes/sfx/
+npm run audio         # takes/ -> public/audio/ and src/audio/recordings.json
+```
+
+The build (`scripts/audio-tools.mjs`, adapted from the one in `../robotaxi`, needs macOS `afconvert`) picks the best takes by measurement, keeps two or three of the sounds heard over and over (barks, steps, paddling), trims and levels everything, and measures the pitch of the bell that plays the little tunes. How loud each recording plays in the game (`GAIN` in `src/audio/audio.js`) was measured so that it matches the synthesised sound it replaces. Music changes with the time of day: morning, afternoon, dusk and night each have a track.
 
 ## Play
 
@@ -77,8 +88,10 @@ src/
     critters.js      bird flocks and butterflies
     items.js         biscuits, golden bones, the ball, sticks, dig spots
   fx/particles.js    petals, splashes, hearts, fireflies, dust motes
-  audio/audio.js     synthesised barks, birdsong, water and a generative score
-  ui/                title screen, HUD, journal
+  audio/audio.js     plays the recordings; synthesised barks, birdsong, water and a
+                     generative score where there are none
+  audio/manifest.js  every recorded sound and track, with its ElevenLabs prompt
+  ui/                title screen, HUD, journal (icons from lucide)
 ```
 
 Handy URL options while tinkering: `?autostart` skips the title, `?t=20.2` starts at a given hour, `?q=low` renders at lower resolution. Progress is kept in `localStorage`; "Start a fresh day" in the journal clears it.

@@ -3,9 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#1a2420" />
+    <meta name="theme-color" content="#0a0a0a" />
     <title>Pawse</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23e39a4a'/><ellipse cx='32' cy='41' rx='13' ry='10' fill='%23fff3df'/><ellipse cx='14' cy='30' rx='5' ry='7' fill='%23fff3df'/><ellipse cx='25' cy='20' rx='5' ry='7' fill='%23fff3df'/><ellipse cx='39' cy='20' rx='5' ry='7' fill='%23fff3df'/><ellipse cx='50' cy='30' rx='5' ry='7' fill='%23fff3df'/></svg>" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23171717'/><ellipse cx='32' cy='41' rx='12' ry='9.5' fill='%23fafafa'/><ellipse cx='15' cy='30' rx='5' ry='6.5' fill='%23fafafa'/><ellipse cx='25' cy='20' rx='5' ry='6.5' fill='%23fafafa'/><ellipse cx='39' cy='20' rx='5' ry='6.5' fill='%23fafafa'/><ellipse cx='49' cy='30' rx='5' ry='6.5' fill='%23fafafa'/></svg>" />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
@@ -17,36 +17,40 @@
       <section id="title" class="screen" hidden>
         <header>
           <h1>Pawse</h1>
-          <p class="tagline">a quiet day at the dog park</p>
+          <p class="tagline">A quiet day at the dog park</p>
         </header>
         <footer>
           <div class="picker">
-            <button id="prevBreed" class="round" aria-label="Previous dog">‹</button>
+            <button id="prevBreed" class="btn icon ghost" aria-label="Previous dog"><i data-lucide="chevron-left"></i></button>
             <div class="breed">
               <div id="breedName">Shiba Inu</div>
               <div id="breedBlurb">Bright-eyed, fox-faced and a little bit stubborn.</div>
             </div>
-            <button id="nextBreed" class="round" aria-label="Next dog">›</button>
+            <button id="nextBreed" class="btn icon ghost" aria-label="Next dog"><i data-lucide="chevron-right"></i></button>
           </div>
-          <button id="begin" class="primary">Go for a walk</button>
-          <p class="keys"><b>WASD</b> walk · <b>Shift</b> run · <b>Space</b> jump · <b>E</b> sniff, greet, drink · <b>1–7</b> tricks · drag to look around</p>
+          <button id="begin" class="btn primary">Go for a walk</button>
+          <p class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk <kbd>Shift</kbd> run <kbd>Space</kbd> jump <kbd>E</kbd> sniff, greet, drink <kbd>1</kbd>&ndash;<kbd>7</kbd> tricks</p>
         </footer>
       </section>
 
       <!-- in play -->
       <section id="hud" hidden>
-        <div class="corner tl">
-          <button id="timeBtn" class="pill" title="Let time drift ahead (T)">
-            <span id="timeIcon" class="ico">☼</span><span id="timeName">Golden hour</span><span class="ff">››</span>
-          </button>
-          <button id="holdBtn" class="pill icon" title="Hold this moment" aria-pressed="false">❚❚</button>
+        <div class="bar tl">
+          <div class="group">
+            <button id="timeBtn" class="btn" data-tip="Let time drift ahead" data-key="T">
+              <span id="timeIcon" class="ico"></span><span id="timeName">Golden hour</span><i data-lucide="fast-forward" class="dim"></i>
+            </button>
+            <button id="holdBtn" class="btn icon" data-tip="Hold this moment" aria-pressed="false" aria-label="Hold this moment"><span id="holdIcon" class="ico"></span></button>
+          </div>
         </div>
-        <div class="corner tr">
-          <button id="joyBtn" class="pill" title="Little joys (J)"><span class="ico">✿</span><span id="joyCount">0</span></button>
-          <button id="musicBtn" class="pill icon" title="Music (M)" aria-pressed="true">♪</button>
-          <button id="soundBtn" class="pill icon" title="Sound" aria-pressed="true">◖))</button>
-          <button id="photoBtn" class="pill icon" title="Hide the interface (P)">◎</button>
-          <button id="helpBtn" class="pill icon" title="How to play">?</button>
+        <div class="bar tr">
+          <button id="joyBtn" class="btn" data-tip="Little joys" data-key="J"><i data-lucide="sparkles"></i><span id="joyCount" class="num">0</span></button>
+          <div class="group">
+            <button id="musicBtn" class="btn icon" data-tip="Music" data-key="M" aria-pressed="true" aria-label="Music"><i data-lucide="music"></i></button>
+            <button id="soundBtn" class="btn icon" data-tip="Sound" aria-pressed="true" aria-label="Sound"><span id="soundIcon" class="ico"></span></button>
+            <button id="photoBtn" class="btn icon" data-tip="Hide the interface" data-key="P" aria-label="Hide the interface"><i data-lucide="eye-off"></i></button>
+            <button id="helpBtn" class="btn icon" data-tip="How to play" data-key="/" aria-label="How to play"><i data-lucide="circle-help"></i></button>
+          </div>
         </div>
 
         <div id="toasts" aria-live="polite"></div>
@@ -69,7 +73,7 @@
 
         <div id="stick"><div id="stickKnob"></div></div>
         <div id="touchBtns">
-          <button data-key="Space">Jump</button>
+          <button data-key="Space" aria-label="Jump"><i data-lucide="arrow-up"></i></button>
           <button data-key="KeyE" class="big">E</button>
         </div>
         <div id="photoHint">Press <kbd>P</kbd> to bring the interface back</div>
@@ -78,13 +82,17 @@
       <!-- journal -->
       <section id="journal" class="panel" hidden>
         <div class="card">
-          <button class="close" data-close aria-label="Close">×</button>
-          <h2>Little joys</h2>
-          <p class="sub" id="journalSub">Nothing to win. Just things to notice.</p>
+          <header class="head">
+            <div>
+              <h2>Little joys</h2>
+              <p class="sub" id="journalSub">Nothing to win. Just things to notice.</p>
+            </div>
+            <button class="btn icon ghost" data-close aria-label="Close"><i data-lucide="x"></i></button>
+          </header>
           <div id="joyGrid"></div>
           <div class="foot">
             <span id="friendList"></span>
-            <button id="resetBtn" class="link">Start a fresh day</button>
+            <button id="resetBtn" class="btn outline"><i data-lucide="rotate-ccw"></i>Start a fresh day</button>
           </div>
         </div>
       </section>
@@ -92,19 +100,23 @@
       <!-- help -->
       <section id="help" class="panel" hidden>
         <div class="card narrow">
-          <button class="close" data-close aria-label="Close">×</button>
-          <h2>Being a dog</h2>
-          <p class="sub">There is nowhere you need to be.</p>
+          <header class="head">
+            <div>
+              <h2>Being a dog</h2>
+              <p class="sub">There is nowhere you need to be.</p>
+            </div>
+            <button class="btn icon ghost" data-close aria-label="Close"><i data-lucide="x"></i></button>
+          </header>
           <dl>
             <dt><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></dt><dd>Walk</dd>
             <dt><kbd>Shift</kbd></dt><dd>Run</dd>
             <dt><kbd>Space</kbd></dt><dd>Jump</dd>
             <dt><kbd>E</kbd></dt><dd>Sniff, greet, drink, pick up, toss, dig</dd>
-            <dt><kbd>1</kbd>–<kbd>7</kbd></dt><dd>Sit · Down · Roll over · Spin · Paw · Beg · Play bow</dd>
-            <dt><kbd>F</kbd> <kbd>H</kbd> <kbd>R</kbd></dt><dd>Bark · Howl · Shake dry</dd>
-            <dt>Drag · Scroll</dt><dd>Look around · Zoom</dd>
+            <dt><kbd>1</kbd>&ndash;<kbd>7</kbd></dt><dd>Sit, down, roll over, spin, paw, beg, play bow</dd>
+            <dt><kbd>F</kbd><kbd>H</kbd><kbd>R</kbd></dt><dd>Bark, howl, shake dry</dd>
+            <dt><span class="muted">Drag, scroll</span></dt><dd>Look around, zoom</dd>
             <dt><kbd>T</kbd></dt><dd>Let time drift ahead</dd>
-            <dt><kbd>J</kbd> <kbd>P</kbd> <kbd>M</kbd></dt><dd>Little joys · Hide interface · Music</dd>
+            <dt><kbd>J</kbd><kbd>P</kbd><kbd>M</kbd></dt><dd>Little joys, hide the interface, music</dd>
           </dl>
           <p class="tips">Play-bow to a dog to start a game of tag. Toss the ball near a friend. Lie down for a while and you will doze off. Stay until dark.</p>
         </div>

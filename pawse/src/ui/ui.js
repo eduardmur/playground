@@ -1,6 +1,21 @@
+import {
+  createElement, createIcons,
+  ArrowUp, ChevronLeft, ChevronRight, CircleDashed, CircleHelp, EyeOff, FastForward, Moon, Music, Pause, Play,
+  RotateCcw, Sparkles, Sun, Sunrise, Sunset, Volume2, VolumeX, X,
+  Heart, Cookie, Droplet, Bird, Star, Waves, Droplets, Rabbit, CircleDot, Copy, Flower2, Bug, Zap, Mountain,
+  BedSingle, Wand, Shovel, TreePalm, HeartHandshake, Award, Bone, Users,
+} from 'lucide';
 import { JOYS } from './joys.js';
 
 const $ = (id) => document.getElementById(id);
+
+const JOY_ICONS = {
+  Heart, Cookie, Droplet, Bird, Star, Waves, Droplets, Rabbit, CircleDot, Copy, Flower2, Bug, Zap, Mountain, Sunset,
+  BedSingle, Wand, Shovel, TreePalm, Sparkles, Moon, Music, HeartHandshake, Award, Bone, Users, Sunrise,
+};
+
+/** A lucide icon as an element. */
+const icon = (node) => createElement(node, { 'aria-hidden': 'true' });
 
 /** The DOM overlay: title, HUD pills, prompts, toasts, the journal. */
 export class UI {
@@ -10,6 +25,11 @@ export class UI {
     this.promptLabel = null;
     this.phase = '';
     this.photo = false;
+
+    createIcons({
+      icons: { ArrowUp, ChevronLeft, ChevronRight, CircleHelp, EyeOff, FastForward, Music, RotateCcw, Sparkles, X },
+      attrs: { 'aria-hidden': 'true' },
+    });
 
     const click = (id, fn) =>
       $(id).addEventListener('click', (e) => {
@@ -104,7 +124,7 @@ export class UI {
     el.className = 'toast joy';
     const ji = document.createElement('div');
     ji.className = 'ji';
-    ji.textContent = joy.icon;
+    ji.append(icon(JOY_ICONS[joy.icon] || Sparkles));
     const jt = document.createElement('div');
     jt.className = 'jt';
     jt.textContent = joy.title;
@@ -131,7 +151,7 @@ export class UI {
   }
 
   setJoyCount() {
-    $('joyCount').textContent = `${this.game.joys.count} / ${JOYS.length}`;
+    $('joyCount').textContent = `${this.game.joys.count}/${JOYS.length}`;
   }
 
   setTime(phase, night, held) {
@@ -139,13 +159,20 @@ export class UI {
     if (key === this.phase) return;
     this.phase = key;
     $('timeName').textContent = phase;
-    $('timeIcon').textContent = night > 0.6 ? '☾' : phase === 'Dusk' || phase === 'Dawn' || phase === 'Sunset' ? '◐' : '☼';
-    $('holdBtn').setAttribute('aria-pressed', String(held));
-    $('holdBtn').title = held ? 'Time is standing still. Click to let it flow.' : 'Hold this moment';
+    const sky = night > 0.6 ? Moon : phase === 'Dawn' ? Sunrise : phase === 'Dusk' || phase === 'Sunset' || phase === 'Golden hour' ? Sunset : Sun;
+    $('timeIcon').replaceChildren(icon(sky));
+    const hold = $('holdBtn');
+    hold.setAttribute('aria-pressed', String(held));
+    hold.dataset.tip = held ? 'Let time flow again' : 'Hold this moment';
+    hold.setAttribute('aria-label', hold.dataset.tip);
+    $('holdIcon').replaceChildren(icon(held ? Play : Pause));
   }
 
   setToggle(id, on) {
-    $(id).setAttribute('aria-pressed', String(on));
+    const b = $(id);
+    b.setAttribute('aria-pressed', String(on));
+    b.classList.toggle('off', !on);
+    if (id === 'soundBtn') $('soundIcon').replaceChildren(icon(on ? Volume2 : VolumeX));
   }
 
   // ----------------------------------------------------------------- panels
@@ -179,10 +206,10 @@ export class UI {
       el.className = `joy${found ? ' found' : ''}`;
       const ji = document.createElement('div');
       ji.className = 'ji';
-      ji.textContent = found ? joy.icon : '·';
+      ji.append(icon(found ? JOY_ICONS[joy.icon] || Sparkles : CircleDashed));
       const jt = document.createElement('div');
       jt.className = 'jt';
-      jt.textContent = found ? joy.title : '· · ·';
+      jt.textContent = found ? joy.title : 'Not yet';
       const jd = document.createElement('div');
       jd.className = 'jd';
       jd.textContent = found ? joy.text : joy.hint;

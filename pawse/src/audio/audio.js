@@ -1,8 +1,75 @@
+import files from 'virtual:audio-index';
+import NOTES from './recordings.json';
 import { clamp } from '../core/utils.js';
 
 const rand = (a, b) => a + Math.random() * (b - a);
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const midi = (n) => 440 * Math.pow(2, (n - 69) / 12);
+const fromDb = (d) => Math.pow(10, d / 20);
+
+// ------------------------------------------------------------- recordings
+
+/** 'sfx/bark_1' -> 'audio/sfx/bark_1.m4a', for every recording that is really there (see vite.config.js). */
+const INDEX = new Map(files.map((f) => [f.replace(/\.[^.]+$/, ''), `audio/${f}`]));
+/** 'bark' -> ['sfx/bark_1', 'sfx/bark_2', 'sfx/bark_3']: the takes the game picks from. */
+const TAKES = new Map();
+for (const key of INDEX.keys()) {
+  const m = key.match(/^sfx\/(.+?)(?:_(\d+))?$/);
+  if (!m) continue;
+  if (!TAKES.has(m[1])) TAKES.set(m[1], []);
+  TAKES.get(m[1]).push(key);
+}
+
+/**
+ * How loud each recording plays, as a gain on top of the level the build gave it. Measured on
+ * 2026-11-15 so that each one matches the synthesised sound it replaces: both rendered offline through
+ * this class and compared by A-weighted loudness, the measure the build uses. The mix therefore holds
+ * whichever of the two is playing.
+ */
+const GAIN = {
+  bark: 0.5, yip: 0.51, howl: 1.29, crunch: 0.38, lap: 0.29, splash: 0.8, paddle: 0.37, step: 0.25, step_hard: 0.2,
+  pickup: 0.38, toss: 0.24, land: 0.13, boing: 0.27, shake: 1.1, sniff: 0.36, yawn: 0.87, dig: 0.19, flutter: 1.71,
+  owl: 1.38, frog: 0.26, whoosh: 0.5, bell: 1.16,
+  // beds: against the synthesised bed at the same setting, and for birdsong and crickets, against the
+  // synthesised calls over twenty seconds of a day or a night
+  wind: 3.4, pond: 3.76, fountain: 7.34, birds: 0.053, crickets: 0.042,
+  // a recorded track against the generative score
+  music: 0.28,
+};
+
+/** A sound effect played from a recording: which one, how loud, how far it carries, on which bus. */
+const REC = {
+  crunch: ['crunch', 0.4],
+  lap: ['lap', 0.2],
+  splash: ['splash', 0.5, 12],
+  paddle: ['paddle', 0.16],
+  step: ['step', 0.055, 6],
+  stepHard: ['step_hard', 0.07, 6],
+  flutter: ['flutter', 0.34, 16],
+  pickup: ['pickup', 0.22],
+  toss: ['toss', 0.2],
+  jump: ['toss', 0.1, 9, 0.85],
+  land: ['land', 0.22, 7],
+  boing: ['boing', 0.2],
+  shake: ['shake', 0.3],
+  sniff: ['sniff', 0.12],
+  yawn: ['yawn', 0.14],
+  dig: ['dig', 0.26],
+  whoosh: ['whoosh', 0.14, 9, 1, 'amb'],
+};
+/** The little tunes, played on the recorded bell: [notes (midi), seconds between them, volume]. */
+const TUNES = {
+  chime: [[76, 79, 83, 88], 0.11, 0.42],
+  friend: [[72, 76, 79, 84], 0.13, 0.42],
+  heart: [[81, 84], 0.1, 0.3],
+  tag: [[79, 86], 0.08, 0.3],
+  click: [[84], 0, 0.12],
+};
+/** Which track goes with which part of the day. */
+const TRACK_FOR = {
+  Dawn: 'morning', Morning: 'morning', Midday: 'afternoon', Afternoon: 'afternoon',
+  'Golden hour': 'dusk', Sunset: 'dusk', Dusk: 'dusk', Night: 'night',
+};
 
 // gentle progressions; each chord: root (midi) + intervals
 const CHORDS_DAY = [
@@ -22,8 +89,10 @@ const CHORDS_NIGHT = [
 const PENTA = [0, 2, 4, 7, 9]; // C major pentatonic fits every chord above
 
 /**
- * Everything you hear is synthesised here with the Web Audio API: barks,
- * splashes, birdsong, crickets, wind, water, and a slow generative score.
+ * Everything you hear: recordings made with ElevenLabs (src/audio/manifest.js) where they exist,
+ * and otherwise sounds synthesised here with the Web Audio API: barks, splashes, birdsong, crickets,
+ * wind, water, and a slow generative score. The single-page build has no recordings and plays the
+ * synthesised ones throughout.
  */
 export class Audio {
   constructor() {
@@ -38,6 +107,11 @@ export class Audio {
     this.chordIdx = 0;
     this.night = 0;
     this.pads = [];
+    this.buffers = new Map(); // 'sfx/bark_1' -> AudioBuffer
+    this.tracks = [...INDEX.keys()].filter((k) => k.startsWith('music/'));
+    this.recorded = this.tracks.length > 0; // recorded music replaces the generative score
+    this.track = null; // { id, el, gain }
+    this.trackWait = 2;
   }
 
   /** Must be called from a user gesture. */
@@ -103,27 +177,113 @@ export class Audio {
     const nd = this.noiseBuf.getChannelData(0);
     for (let i = 0; i < nlen; i++) nd[i] = Math.random() * 2 - 1;
 
-    // looping beds: wind, pond, fountain
-    this.wind = this._bed('bandpass', 420, 0.5, 0.0);
-    this.pond = this._bed('bandpass', 1300, 0.9, 0.0);
-    this.fountain = this._bed('highpass', 1800, 0.6, 0.0);
+    // recorded music skips the reverb: it has its own room
+    this.trackBus = ctx.createGain();
+    this.trackBus.gain.value = this.musicOn ? GAIN.music : 0;
+    this.trackBus.connect(this.master);
+
+    // looping beds: wind, pond, fountain, and with recordings, birdsong and crickets
+    this.wind = this._bed('bandpass', 420, 0.5, 0.0, 'wind');
+    this.pond = this._bed('bandpass', 1300, 0.9, 0.0, 'pond');
+    this.fountain = this._bed('highpass', 1800, 0.6, 0.0, 'fountain');
+    this.birds = TAKES.has('birds') ? this._bed(null, 0, 0, 0, 'birds') : null;
+    this.crickets = TAKES.has('crickets') ? this._bed(null, 0, 0, 0, 'crickets') : null;
+
+    // fetch the recordings in the background; the synthesised sounds cover until they arrive
+    for (const [id, keys] of TAKES) for (const k of keys) this._load(k).then(() => this.beds?.[id]?.swap());
   }
 
-  _bed(type, freq, q, gain) {
+  /** Fetch and decode one recorded sound effect. */
+  _load(key) {
+    return fetch(INDEX.get(key))
+      .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(r.status))))
+      .then((ab) => new Promise((res, rej) => this.ctx.decodeAudioData(ab, res, rej)))
+      .then((buf) => this.buffers.set(key, buf))
+      .catch(() => {
+        /* the synthesised sound stays */
+      });
+  }
+
+  /** The gain the build could not put into a recording, as noted in recordings.json. */
+  _owed(key, buf) {
+    const n = NOTES[key];
+    return n && n.gain && Math.abs(n.seconds - buf.duration) < 0.2 ? fromDb(n.gain) : 1;
+  }
+
+  /** One recorded take of `id` (a random one where there are several), or null while none has loaded. */
+  _take(id) {
+    const ready = (TAKES.get(id) || []).filter((k) => this.buffers.has(k));
+    if (!ready.length) return null;
+    const key = pick(ready), buf = this.buffers.get(key);
+    return { key, buf, gain: GAIN[id] * this._owed(key, buf) };
+  }
+
+  /** Play a recording of `id` into `out`. False when there is none (yet), so the caller can synthesise. */
+  _rec(id, out, { rate = 1, vol = 1, at = 0 } = {}) {
+    const t = this._take(id);
+    if (!t) return false;
+    const ctx = this.ctx, src = ctx.createBufferSource(), g = ctx.createGain();
+    src.buffer = t.buf;
+    src.playbackRate.value = rate;
+    g.gain.value = t.gain * vol;
+    src.connect(g).connect(out);
+    src.start(ctx.currentTime + at);
+    return true;
+  }
+
+  /** A tune on the recorded bell: each note is the one recording, played faster or slower. */
+  _tune(name, pos) {
+    const t = this._take('bell');
+    if (!t) return false;
+    const [notes, gap, vol] = TUNES[name];
+    const root = NOTES[t.key]?.midi ?? 72;
+    const out = this._out(name === 'tag' ? pos : null, vol, this.musicBus);
+    notes.forEach((n, i) => this._rec('bell', out, { rate: Math.pow(2, (n - root) / 12), vol: 0.5, at: i * gap }));
+    return true;
+  }
+
+  /**
+   * A bed that keeps running. It starts on filtered noise (or silence, for a sound with no synthesised
+   * version) and switches to the recording of `id` once that has loaded.
+   */
+  _bed(type, freq, q, gain, id) {
     const ctx = this.ctx;
-    const src = ctx.createBufferSource();
-    src.buffer = this.noiseBuf;
-    src.loop = true;
-    src.playbackRate.value = rand(0.85, 1.15);
-    const f = ctx.createBiquadFilter();
-    f.type = type;
-    f.frequency.value = freq;
-    f.Q.value = q;
     const g = ctx.createGain();
     g.gain.value = gain;
-    src.connect(f).connect(g).connect(this.ambBus);
-    src.start();
-    return { gain: g.gain, filter: f };
+    g.connect(this.ambBus);
+    const f = ctx.createBiquadFilter();
+    f.type = type || 'lowpass';
+    f.frequency.value = freq || 20000;
+    f.Q.value = q;
+    f.connect(g);
+    let src = null;
+    if (type) {
+      src = ctx.createBufferSource();
+      src.buffer = this.noiseBuf;
+      src.loop = true;
+      src.playbackRate.value = rand(0.85, 1.15);
+      src.connect(f);
+      src.start();
+    }
+    const bed = {
+      gain: g.gain,
+      filter: f,
+      recorded: false,
+      swap: () => {
+        const t = this._take(id);
+        if (!t || bed.recorded) return;
+        bed.recorded = true;
+        const rec = ctx.createBufferSource(), rg = ctx.createGain();
+        rec.buffer = t.buf;
+        rec.loop = true;
+        rg.gain.value = t.gain;
+        rec.connect(rg).connect(g);
+        rec.start(ctx.currentTime, Math.random() * t.buf.duration);
+        if (src) src.stop(ctx.currentTime + 0.05);
+      },
+    };
+    (this.beds ||= {})[id] = bed;
+    return bed;
   }
 
   setMuted(m) {
@@ -133,7 +293,10 @@ export class Audio {
 
   setMusic(on) {
     this.musicOn = on;
-    if (this.ctx) this.musicBus.gain.setTargetAtTime(on ? 0.55 : 0, this.ctx.currentTime, 0.6);
+    if (!this.ctx) return;
+    this.musicBus.gain.setTargetAtTime(on ? 0.55 : 0, this.ctx.currentTime, 0.6);
+    this.trackBus.gain.setTargetAtTime(on ? GAIN.music : 0, this.ctx.currentTime, 0.6);
+    if (!on && this.track) this._endTrack(0.8);
   }
 
   setListener(x, z, rx, rz) {
@@ -216,6 +379,9 @@ export class Audio {
     if (!this.ctx) return;
     const ctx = this.ctx;
     const pitch = (dog.breed.voice?.pitch || 1) * (yip ? 1.35 : 1) * rand(0.96, 1.05) / Math.pow(dog.scale / dog.breed.scale, 0.5);
+    // a recorded bark, a little higher or lower for each breed; small dogs and happy greetings yip
+    const small = (dog.breed.voice?.pitch || 1) >= 1.25;
+    if (this._rec(yip || small ? 'yip' : 'bark', this._out(dog.pos, vol * 0.5, this.sfxBus, 14), { rate: Math.pow(pitch / (yip ? 1.35 : 1), 0.5) * (small && !yip ? 0.95 : 1) })) return;
     const out = this._out(dog.pos, vol * 0.5, this.sfxBus, 14);
     const t0 = ctx.currentTime;
     const dur = yip ? 0.11 : 0.17;
@@ -252,6 +418,7 @@ export class Audio {
     const ctx = this.ctx;
     const pitch = (dog.breed.voice?.pitch || 1) * rand(0.95, 1.06);
     const out = this._out(dog.pos, 0.34, this.sfxBus, 22);
+    if (this._rec('howl', out, { rate: Math.pow(pitch, 0.4), at: 0.25 })) return;
     const t0 = ctx.currentTime + 0.25, dur = 2.5;
     const f0 = 392 * pitch;
     const f = ctx.createBiquadFilter();
@@ -294,6 +461,12 @@ export class Audio {
     if (!this.ctx) return;
     const v = pos && pos.vol !== undefined ? pos.vol : 1;
     const p = pos && pos.x !== undefined ? pos : null;
+    if (TUNES[name] && this._tune(name, p)) return;
+    const r = REC[name];
+    if (r) {
+      const [id, vol, range = 9, rate = 1, bus] = r;
+      if (this._rec(id, this._out(p, vol * v, bus === 'amb' ? this.ambBus : this.sfxBus, range), { rate: rate * rand(0.97, 1.03) })) return;
+    }
     switch (name) {
       case 'crunch': {
         const out = this._out(p, 0.4 * v);
@@ -458,6 +631,7 @@ export class Audio {
   _owl() {
     const out = this._out({ x: this.lx + rand(-30, 30), z: this.lz + rand(-30, 30) }, 0.07, this.ambBus, 40);
     out.connect(this.sendAmb);
+    if (this._rec('owl', out, { rate: rand(0.95, 1.04) })) return;
     const f = rand(320, 380);
     [[0, 0.34], [0.55, 0.16], [0.78, 0.4]].forEach(([at, dur]) =>
       this._tone(out, { type: 'sine', f0: f, f1: f * 0.94, dur, vol: 0.9, attack: 0.05, at, curve: 'lin' })
@@ -466,6 +640,7 @@ export class Audio {
 
   _frog() {
     const out = this._out(this.pondPos, 0.06, this.ambBus, 16);
+    if (this._rec('frog', out, { rate: rand(0.9, 1.1) })) return;
     const f = rand(170, 230);
     for (let k = 0; k < 2; k++) {
       for (let i = 0; i < 6; i++) this._tone(out, { type: 'square', f0: f, dur: 0.02, vol: 0.5, attack: 0.003, at: k * 0.3 + i * 0.03 });
@@ -520,9 +695,57 @@ export class Audio {
     this._bell(f, out, { vol: rand(0.07, 0.12), dur: rand(1.6, 2.6), at });
   }
 
+  // ------------------------------------------------------------------- tracks
+
+  /** Start the recorded track for this part of the day. Streamed, not decoded: they are long. */
+  _startTrack(id) {
+    const ctx = this.ctx, el = new window.Audio(INDEX.get(`music/${id}`));
+    el.crossOrigin = 'anonymous';
+    const src = ctx.createMediaElementSource(el), gain = ctx.createGain();
+    const n = NOTES[`music/${id}`];
+    const level = n && n.gain ? fromDb(n.gain) : 1;
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(level, ctx.currentTime + 3);
+    src.connect(gain).connect(this.trackBus);
+    const track = { id, el, gain };
+    el.addEventListener('ended', () => {
+      if (this.track !== track) return;
+      this.track = null;
+      this.trackWait = rand(25, 50); // a quiet stretch before the next one
+    });
+    el.play().catch(() => {
+      if (this.track === track) this.track = null;
+    });
+    this.track = track;
+  }
+
+  _endTrack(fade = 5) {
+    const t = this.track, ctx = this.ctx;
+    if (!t) return;
+    this.track = null;
+    t.gain.gain.cancelScheduledValues(ctx.currentTime);
+    t.gain.gain.setTargetAtTime(0, ctx.currentTime, fade / 4);
+    setTimeout(() => t.el.pause(), fade * 1000 + 200);
+  }
+
+  _tracks(dt, phase) {
+    const want = TRACK_FOR[phase] || 'afternoon';
+    if (!this.tracks.includes(`music/${want}`)) return;
+    if (this.track) {
+      // the light has moved on (time drifted ahead): let this one go and start the right one soon
+      if (this.track.id !== want) {
+        this._endTrack(5);
+        this.trackWait = 7;
+      }
+      return;
+    }
+    this.trackWait -= dt;
+    if (this.trackWait <= 0 && this.musicOn) this._startTrack(want);
+  }
+
   // ------------------------------------------------------------------- update
 
-  /** env: { night, mist, pond: 0..1, fountain: 0..1, gust: 0..1, pondPos } */
+  /** env: { night, mist, pond: 0..1, fountain: 0..1, gust: 0..1, pondPos, phase } */
   update(dt, env) {
     const ctx = this.ctx;
     if (!ctx || ctx.state !== 'running') return;
@@ -533,19 +756,22 @@ export class Audio {
     this.wind.filter.frequency.setTargetAtTime(340 + env.gust * 260, now, 0.8);
     this.pond.gain.setTargetAtTime(env.pond * 0.035, now, 0.4);
     this.fountain.gain.setTargetAtTime(env.fountain * 0.06, now, 0.4);
+    // recorded birdsong and crickets run as beds, busiest at dawn and on a warm night
+    const day = 1 - env.night;
+    if (this.birds) this.birds.gain.setTargetAtTime(day > 0.25 ? Math.min(1, day * (1 + env.mist * 1.2)) : 0, now, 1.5);
+    if (this.crickets) this.crickets.gain.setTargetAtTime(env.night > 0.35 ? env.night : 0, now, 1.5);
 
     const t = this.t;
-    const day = 1 - env.night;
     t.bird -= dt;
     if (t.bird <= 0) {
       // the dawn chorus is the busiest time of day
       t.bird = rand(0.5, 3.4) / Math.max(0.12, day * (1 + env.mist * 2.2));
-      if (day > 0.25) this._birdsong();
+      if (day > 0.25 && !this.birds?.recorded) this._birdsong();
     }
     t.cricket -= dt;
     if (t.cricket <= 0) {
       t.cricket = rand(0.5, 1.6);
-      if (env.night > 0.35 && Math.random() < env.night) this._cricket();
+      if (env.night > 0.35 && Math.random() < env.night && !this.crickets?.recorded) this._cricket();
     }
     t.owl -= dt;
     if (t.owl <= 0) {
@@ -558,6 +784,10 @@ export class Audio {
       if (env.night > 0.5 && env.pond > 0.25 && this.pondPos) this._frog();
     }
 
+    if (this.recorded) {
+      this._tracks(dt, env.phase);
+      return;
+    }
     t.chord -= dt;
     if (t.chord <= 0) {
       t.chord = rand(9, 12);

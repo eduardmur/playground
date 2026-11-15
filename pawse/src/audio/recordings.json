@@ -1,0 +1,90 @@
+{
+ "music/night": {
+  "seconds": 179.92,
+  "gain": 6.3
+ },
+ "sfx/bell": {
+  "seconds": 2.06,
+  "midi": 71.26
+ },
+ "sfx/boing_1": {
+  "seconds": 0.39,
+  "gain": 6.7
+ },
+ "sfx/boing_2": {
+  "seconds": 0.24,
+  "gain": 6.4
+ },
+ "sfx/crunch_1": {
+  "seconds": 1.53,
+  "gain": 5.8
+ },
+ "sfx/crunch_2": {
+  "seconds": 1.54,
+  "gain": 8.5
+ },
+ "sfx/dig": {
+  "seconds": 1.89,
+  "gain": 2.7
+ },
+ "sfx/flutter": {
+  "seconds": 1.73,
+  "gain": 3.7
+ },
+ "sfx/land_1": {
+  "seconds": 0.48,
+  "gain": 6.2
+ },
+ "sfx/land_2": {
+  "seconds": 0.54,
+  "gain": 7.3
+ },
+ "sfx/lap_2": {
+  "seconds": 0.72,
+  "gain": 3.9
+ },
+ "sfx/lap_3": {
+  "seconds": 0.59,
+  "gain": 3.5
+ },
+ "sfx/paddle_2": {
+  "seconds": 0.65,
+  "gain": 1.9
+ },
+ "sfx/paddle_3": {
+  "seconds": 0.69,
+  "gain": 0.8
+ },
+ "sfx/pickup": {
+  "seconds": 0.55,
+  "gain": 6.4
+ },
+ "sfx/shake": {
+  "seconds": 1.38,
+  "gain": 3.1
+ },
+ "sfx/splash_1": {
+  "seconds": 1.09,
+  "gain": 0.7
+ },
+ "sfx/splash_2": {
+  "seconds": 1.27,
+  "gain": 1.9
+ },
+ "sfx/step_1": {
+  "seconds": 0.52,
+  "gain": 10.2
+ },
+ "sfx/step_2": {
+  "seconds": 0.54,
+  "gain": 9.5
+ },
+ "sfx/step_hard_1": {
+  "seconds": 0.48,
+  "gain": 6.8
+ },
+ "sfx/step_hard_2": {
+  "seconds": 0.38,
+  "gain": 6.1
+ }
+}

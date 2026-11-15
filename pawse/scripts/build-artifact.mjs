@@ -20,10 +20,18 @@ const out = resolve(outArg || join(root, 'dist', 'pawse-artifact.html'));
 const three = JSON.parse(await readFile(join(root, 'node_modules/three/package.json'), 'utf8')).version;
 const THREE_CDN = `https://cdnjs.cloudflare.com/ajax/libs/three.js/${three}/three.module.min.js`;
 
+// the page carries no audio files: the game plays its synthesised sounds throughout
+const noRecordings = {
+  name: 'no-recordings',
+  resolveId: (id) => (id === 'virtual:audio-index' ? '\0virtual:audio-index' : null),
+  load: (id) => (id === '\0virtual:audio-index' ? 'export default [];' : null),
+};
+
 const result = await build({
   root,
   configFile: false,
   logLevel: 'warn',
+  plugins: [noRecordings],
   build: {
     write: false,
     modulePreload: false,

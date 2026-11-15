@@ -491,6 +491,7 @@ export class Game {
       fountain: clamp(1 - Math.hypot(cp.x - WORLD.plaza.x, cp.z - WORLD.plaza.z) / 20, 0, 1),
       gust: clamp(shared.uWindStr.value - 0.5, 0, 1),
       pondPos: WORLD.pond,
+      phase: this.sky.phase().name,
     });
 
     this.ui.setPrompt(this.player.ctx && !this.ui.panel ? this.player.ctx.label : null);

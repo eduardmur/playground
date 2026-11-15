@@ -8,9 +8,12 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "build:artifact": "node scripts/build-artifact.mjs"
+    "build:artifact": "node scripts/build-artifact.mjs",
+    "audio": "node scripts/audio-tools.mjs build",
+    "audio:split": "node scripts/audio-tools.mjs split"
   },
   "dependencies": {
+    "lucide": "^1.73.0",
     "three": "^0.180.0"
   },
   "devDependencies": {
