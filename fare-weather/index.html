@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#0a0a0a" />
+    <title>Fare Weather</title>
+    <meta name="description" content="A lofi robotaxi shift. Nobody is driving." />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%2311151a'/><path d='M12 40c0-9 6-16 20-16s20 7 20 16v4H12z' fill='%23e9edf1'/><circle cx='22' cy='45' r='5' fill='%2311151a'/><circle cx='42' cy='45' r='5' fill='%2311151a'/><circle cx='46' cy='16' r='6' fill='%23f2b84b'/></svg>" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <canvas id="scene" aria-label="The view from inside a driverless cab"></canvas>
+    <div id="fade"></div>
+
+    <main id="ui">
+      <!-- in play -->
+      <section id="hud">
+        <div class="bar tl">
+          <div id="ride" class="status"><span class="dot"></span><span id="rideLabel"></span><b id="rideHead"></b></div>
+        </div>
+        <div class="bar tr" role="toolbar" aria-label="Controls">
+          <button id="skyBtn" class="btn" aria-haspopup="dialog" aria-expanded="false" data-tip="Weather and time" data-key="Tab"><span id="skyIcon" class="ico"></span><span id="skyName">Clear</span><span id="clock" class="muted num">5:40 pm</span></button>
+          <button id="soundBtn" class="btn" aria-haspopup="dialog" aria-expanded="false" data-tip="Sound"><span id="soundIcon" class="ico"></span><span id="trackName">Radio</span></button>
+          <div class="group">
+            <button id="camBtn" class="btn icon" data-tip="Change view" data-key="C" aria-label="Change view"><i data-lucide="video"></i></button>
+            <button id="ridersBtn" class="btn" data-tip="Riders you have met" data-key="J"><i data-lucide="users"></i><span class="num"><span id="metCount">0</span><span class="muted">/14</span></span></button>
+            <button id="setBtn" class="btn icon" aria-haspopup="dialog" aria-expanded="false" data-tip="Settings" aria-label="Settings"><i data-lucide="settings"></i></button>
+            <button id="hideBtn" class="btn icon" data-tip="Hide the interface" data-key="H" aria-label="Hide the interface"><i data-lucide="eye-off"></i></button>
+          </div>
+        </div>
+
+        <!-- weather and time -->
+        <div id="skyPop" class="pop" role="dialog" aria-label="Weather and time" hidden>
+          <div class="field">
+            <div class="label">Weather</div>
+            <div id="weatherChips" class="toggles"></div>
+          </div>
+          <div class="sep"></div>
+          <div class="field">
+            <div class="label"><span>Time</span><span id="timeLabel" class="value"></span></div>
+            <input id="timeSlider" class="slider" type="range" min="0" max="24" step="0.05" aria-label="Time of day" />
+            <div id="timeChips" class="presets"></div>
+          </div>
+          <div class="field">
+            <div class="label"><span>Pace of the day</span><span id="flowLabel" class="value"></span></div>
+            <div id="flowChips" class="tabs" role="group" aria-label="How fast the day passes"></div>
+          </div>
+        </div>
+
+        <!-- sound -->
+        <div id="soundPop" class="pop" role="dialog" aria-label="Sound" hidden>
+          <div class="rowline">
+            <div class="grow"><div class="title">Radio</div><div id="trackLine" class="desc">Off</div></div>
+            <button id="nextBtn" class="btn icon ghost" title="Next track (N)" aria-label="Next track"><i data-lucide="skip-forward"></i></button>
+            <button id="musicBtn" class="switch" role="switch" aria-checked="true" aria-label="Radio" title="Radio on or off (M)"><span></span></button>
+          </div>
+          <div class="sep"></div>
+          <div class="field">
+            <div class="label"><span><i data-lucide="music"></i>Radio</span><span id="volMusicValue" class="value"></span></div>
+            <input id="volMusic" class="slider" type="range" min="0" max="1" step="0.01" aria-label="Radio volume" />
+          </div>
+          <div class="field">
+            <div class="label"><span><i data-lucide="car-front"></i>Car and street</span><span id="volAmbValue" class="value"></span></div>
+            <input id="volAmb" class="slider" type="range" min="0" max="1" step="0.01" aria-label="Car and street volume" />
+          </div>
+          <div class="field">
+            <div class="label"><span><i data-lucide="message-circle"></i>Voices</span><span id="volVoiceValue" class="value"></span></div>
+            <input id="volVoice" class="slider" type="range" min="0" max="1" step="0.01" aria-label="Voices volume" />
+          </div>
+          <div class="sep"></div>
+          <div class="rowline">
+            <div class="grow"><div class="title">Subtitles</div><div class="desc">Show what is said in the car</div></div>
+            <button id="subsOn" class="switch" role="switch" aria-checked="true" aria-label="Subtitles"><span></span></button>
+          </div>
+        </div>
+
+        <!-- settings -->
+        <div id="setPop" class="pop" role="dialog" aria-label="Settings" hidden>
+          <div class="field">
+            <div class="label">View</div>
+            <div id="viewTabs" class="tabs" role="group" aria-label="Where you look from"></div>
+          </div>
+          <div class="field">
+            <div class="label"><span>Picture</span><span class="value">Reloads the page</span></div>
+            <div id="qualityTabs" class="tabs" role="group" aria-label="Picture quality"></div>
+          </div>
+          <div class="sep"></div>
+          <div class="field">
+            <div class="label">Keys</div>
+            <div id="keys" class="keys"></div>
+          </div>
+        </div>
+
+        <div id="toasts" aria-live="polite"></div>
+        <div id="subs" aria-live="polite"><b id="subWho"></b><span id="subText"></span></div>
+        <div id="hint">Press <kbd>H</kbd> to bring the interface back</div>
+      </section>
+
+      <!-- riders -->
+      <section id="riders" class="sheet" hidden>
+        <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="ridersTitle">
+          <button class="btn icon ghost close" id="ridersClose" aria-label="Close"><i data-lucide="x"></i></button>
+          <h2 id="ridersTitle">Riders</h2>
+          <p class="desc" id="ridersSub"></p>
+          <div id="riderGrid"></div>
+          <div class="foot">
+            <span id="shiftStats"></span>
+            <button id="resetBtn" class="btn outline"><i data-lucide="rotate-ccw"></i>Start a fresh shift</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,401 @@
+{
+ "sfx/cabin_drive": {
+  "seconds": 30,
+  "gain": 11.3
+ },
+ "sfx/snow_hush": {
+  "seconds": 25,
+  "gain": 0.9
+ },
+ "sfx/wind": {
+  "seconds": 25,
+  "gain": 3.8
+ },
+ "voice/bea_tom/bye": {
+  "seconds": 6.33,
+  "at": [
+   0.03,
+   2.04,
+   5.03
+  ]
+ },
+ "voice/bea_tom/hello": {
+  "seconds": 8.9,
+  "at": [
+   0.03,
+   1.36,
+   3.49,
+   5.37
+  ]
+ },
+ "voice/bea_tom/scene": {
+  "seconds": 35.04,
+  "at": [
+   0.03,
+   2.65,
+   4.59,
+   9.16,
+   16.13,
+   18.66,
+   21.65,
+   24.55,
+   25.79,
+   30.28
+  ]
+ },
+ "voice/dev/bye": {
+  "seconds": 5.27,
+  "at": [
+   0.03,
+   3.4
+  ]
+ },
+ "voice/dev/hello": {
+  "seconds": 5.22,
+  "at": [
+   0.03,
+   1.68,
+   4.14
+  ]
+ },
+ "voice/dev/scene": {
+  "seconds": 39.5,
+  "at": [
+   0.03,
+   4.91,
+   11.04,
+   17.4,
+   21.39,
+   32.29
+  ]
+ },
+ "voice/ellis/bye": {
+  "seconds": 4.55,
+  "at": [
+   0.03,
+   3.38
+  ]
+ },
+ "voice/ellis/hello": {
+  "seconds": 6.9,
+  "at": [
+   0.03,
+   3.49
+  ]
+ },
+ "voice/ellis/scene": {
+  "seconds": 27.14,
+  "at": [
+   0.03,
+   3.78,
+   5.33,
+   10.93,
+   12.11,
+   13.51,
+   14.56,
+   18.52,
+   21.43
+  ]
+ },
+ "voice/gus/bye": {
+  "seconds": 7.39,
+  "at": [
+   0.03,
+   4.32
+  ]
+ },
+ "voice/gus/hello": {
+  "seconds": 7.38,
+  "at": [
+   0.03,
+   3.93
+  ]
+ },
+ "voice/gus/scene": {
+  "seconds": 40.89,
+  "at": [
+   0.03,
+   3.55,
+   7.64,
+   16.44,
+   17.47,
+   24.26,
+   31.42,
+   37
+  ]
+ },
+ "voice/hana/bye": {
+  "seconds": 5.72,
+  "at": [
+   0.03,
+   3.79
+  ]
+ },
+ "voice/hana/hello": {
+  "seconds": 6.7,
+  "at": [
+   0.03,
+   2.8,
+   5.64
+  ]
+ },
+ "voice/hana/scene": {
+  "seconds": 32.26,
+  "at": [
+   0.03,
+   4.34,
+   6.74,
+   11.67,
+   13.41,
+   21.14,
+   24.01,
+   29.8
+  ]
+ },
+ "voice/june/bye": {
+  "seconds": 7.33,
+  "at": [
+   0.03,
+   3.57
+  ]
+ },
+ "voice/june/hello": {
+  "seconds": 10.69,
+  "at": [
+   0.03,
+   4.76,
+   8.27
+  ]
+ },
+ "voice/june/scene": {
+  "seconds": 38.93,
+  "at": [
+   0.03,
+   6.89,
+   12.24,
+   18.32,
+   24.34,
+   32.94
+  ]
+ },
+ "voice/kit/bye": {
+  "seconds": 5.42,
+  "at": [
+   0.03,
+   3.42
+  ]
+ },
+ "voice/kit/hello": {
+  "seconds": 7.35,
+  "at": [
+   0.03,
+   3.97
+  ]
+ },
+ "voice/kit/scene": {
+  "seconds": 34.92,
+  "at": [
+   0.03,
+   13.38,
+   15.77,
+   18.05,
+   22.11,
+   28.64,
+   29.78,
+   32.97
+  ]
+ },
+ "voice/lena/bye": {
+  "seconds": 5.53,
+  "at": [
+   0.03,
+   3.81
+  ]
+ },
+ "voice/lena/hello": {
+  "seconds": 5.86,
+  "at": [
+   0.03,
+   2.75
+  ]
+ },
+ "voice/lena/scene": {
+  "seconds": 42.63,
+  "at": [
+   0.03,
+   7.03,
+   12.14,
+   21.89,
+   29.44,
+   34.41
+  ]
+ },
+ "voice/maya/bye": {
+  "seconds": 4.82,
+  "at": [
+   0.03,
+   3.28
+  ]
+ },
+ "voice/maya/hello": {
+  "seconds": 6.28,
+  "at": [
+   0.03,
+   2.76
+  ]
+ },
+ "voice/maya/scene": {
+  "seconds": 45.43,
+  "at": [
+   0.03,
+   4.56,
+   17.5,
+   23.28,
+   28.56,
+   35.02,
+   40.75
+  ]
+ },
+ "voice/noor/bye": {
+  "seconds": 5.23,
+  "at": [
+   0.03,
+   3.09
+  ]
+ },
+ "voice/noor/hello": {
+  "seconds": 3.13,
+  "at": [
+   0.03,
+   2.2
+  ]
+ },
+ "voice/noor/scene": {
+  "seconds": 20.94,
+  "at": [
+   0.03,
+   1.83,
+   3.08,
+   5.33,
+   7.08,
+   13.07,
+   16.45
+  ]
+ },
+ "voice/okafor/bye": {
+  "seconds": 5.63,
+  "at": [
+   0.03,
+   2.6
+  ]
+ },
+ "voice/okafor/hello": {
+  "seconds": 8.5,
+  "at": [
+   0.03,
+   4.51
+  ]
+ },
+ "voice/okafor/scene": {
+  "seconds": 35.85,
+  "at": [
+   0.03,
+   5.81,
+   8.45,
+   17.95,
+   21.26,
+   28.13,
+   30.85
+  ]
+ },
+ "voice/priya_theo/bye": {
+  "seconds": 6.58,
+  "at": [
+   0.03,
+   1.53,
+   3.36,
+   4.76
+  ]
+ },
+ "voice/priya_theo/hello": {
+  "seconds": 9.59,
+  "at": [
+   0.03,
+   2.58,
+   4.78,
+   8.3
+  ]
+ },
+ "voice/priya_theo/scene": {
+  "seconds": 31.05,
+  "at": [
+   0.03,
+   2.48,
+   4.55,
+   8.12,
+   13.19,
+   14.79,
+   16.32,
+   22.49,
+   26.2,
+   28.11
+  ]
+ },
+ "voice/rafael/bye": {
+  "seconds": 4.9,
+  "at": [
+   0.03,
+   3.18
+  ]
+ },
+ "voice/rafael/hello": {
+  "seconds": 6.82,
+  "at": [
+   0.03,
+   2.73
+  ]
+ },
+ "voice/rafael/scene": {
+  "seconds": 39.9,
+  "at": [
+   0.03,
+   9.31,
+   14.46,
+   23.26,
+   27.48,
+   36.04
+  ]
+ },
+ "voice/sam/bye": {
+  "seconds": 4.65,
+  "at": [
+   0.03,
+   2.88
+  ]
+ },
+ "voice/sam/hello": {
+  "seconds": 8.06,
+  "at": [
+   0.03,
+   4.83
+  ]
+ },
+ "voice/sam/scene": {
+  "seconds": 37.15,
+  "at": [
+   0.03,
+   4.79,
+   7.47,
+   10.72,
+   12.26,
+   14.98,
+   15.94,
+   19.05,
+   23.2,
+   29.9,
+   31.12,
+   32.95,
+   35.21
+  ]
+ }
+}

@@ -4,6 +4,7 @@ Small experiments: games, toys and prototypes. Each folder is a separate project
 
 | | Project | Links |
 | --- | --- | --- |
+| <a href="https://eduardmur.github.io/playground/fare-weather/"><img src="fare-weather/screenshots/1-golden-hour.jpg" width="280" alt="Fare Weather: the view from inside a driverless cab, heading into a low sun"></a> | **Fare Weather**<br>A lofi robotaxi shift in a city of robots: ride along in a driverless cab, pick robots up, change the sky. Three.js. | [Play](https://eduardmur.github.io/playground/fare-weather/) · [Code](fare-weather/) |
 | <a href="https://eduardmur.github.io/playground/pawse/"><img src="pawse/screenshots/1-sunset.jpg" width="280" alt="Pawse: two dogs at the pond at sunset"></a> | **Pawse**<br>A meditative 3D game: you are a dog in a park. Three.js. | [Play](https://eduardmur.github.io/playground/pawse/) · [Code](pawse/) |
 
 ## Adding an experiment
