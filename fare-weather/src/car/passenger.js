@@ -100,7 +100,6 @@ export class Passenger {
     body.group.add(belt);
 
     this.cake = !!look.cake;
-    this.calling = false; // set by the ride script for as long as a call lasts: a hand at the ear, and down again after
     if (this.cake) {
       const c = cake();
       c.position.set(0, SEAT.hipY / sc.y + 0.092, SEAT.hipZ / sc.x - 0.275);
@@ -147,10 +146,10 @@ export class Passenger {
   }
 
   /**
-   * talk: 0..1 while this rider is speaking; turn: where they are looking
-   * (-1 out of their window .. +1 toward the middle of the car); lean, pitch: the car's motion.
+   * turn: where they are looking (-1 out of their window .. +1 toward the middle of the car);
+   * lean, pitch: the car's motion.
    */
-  update(dt, time, talk, turn, lean, pitch) {
+  update(dt, time, turn, lean, pitch) {
     const g = this.group;
     let e = 0, hop = 0;
     if (this.state === 'entering' || this.state === 'leaving') {
@@ -171,6 +170,6 @@ export class Passenger {
     // swung in from the door: a little high, still half turned toward the opening
     g.position.set(this.side * e * 0.62, e * 0.05 + hop, e * -0.05);
     g.rotation.y = -this.side * e * 0.55;
-    this.body.sit(dt, { time, enter: e, side: this.side, talk, turn, lean, pitch, hold: this.cake ? 'cake' : this.calling ? 'call' : null }, SEAT);
+    this.body.sit(dt, { time, enter: e, side: this.side, turn, lean, pitch, hold: this.cake ? 'cake' : null }, SEAT);
   }
 }

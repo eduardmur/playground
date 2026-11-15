@@ -1,13 +1,13 @@
 // The interface outside the car: a quiet row of controls, three small panels
-// (weather and time, sound, settings), subtitles, and the list of riders met.
+// (weather and time, sound, settings), and the list of riders met.
 import {
   createElement, createIcons,
   Sun, Cloud, CloudRain, CloudLightning, CloudFog, Snowflake, Shuffle,
-  Volume2, VolumeX, Music, CarFront, MessageCircle, SkipForward,
+  Volume2, VolumeX, Music, CarFront, SkipForward,
   Video, Users, Settings, EyeOff, X, RotateCcw,
 } from 'lucide';
 import { WEATHERS, WEATHER_ORDER } from '../world/weather.js';
-import { RIDERS, VOICES } from '../data/riders.js';
+import { RIDERS } from '../data/riders.js';
 import { clockText } from '../core/utils.js';
 
 const $ = (id) => document.getElementById(id);
@@ -64,13 +64,12 @@ const fill = (el) => el.style.setProperty('--p', `${((el.value - el.min) / (el.m
 export class Hud {
   constructor(game) {
     this.game = game;
-    this.subsOn = true;
     this.bare = false;
     this.open = null; // id of the panel that is showing
     this.tick = 0;
     this.sky = null;
 
-    createIcons({ icons: { Music, CarFront, MessageCircle, SkipForward, Video, Users, Settings, EyeOff, X, RotateCcw }, attrs: { 'aria-hidden': 'true' } });
+    createIcons({ icons: { Music, CarFront, SkipForward, Video, Users, Settings, EyeOff, X, RotateCcw }, attrs: { 'aria-hidden': 'true' } });
 
     // ---- the row of controls
     for (const [btn, pop] of PANELS) $(btn).addEventListener('click', () => this.show(this.open === pop ? null : pop));
@@ -109,7 +108,7 @@ export class Hud {
     $('musicBtn').addEventListener('click', () => game.toggleMusic());
     $('nextBtn').addEventListener('click', () => game.audio.nextTrack());
     const vol = game.audio.vol;
-    for (const [id, name] of [['volMusic', 'music'], ['volAmb', 'ambience'], ['volVoice', 'voice']]) {
+    for (const [id, name] of [['volMusic', 'music'], ['volAmb', 'ambience']]) {
       const el = $(id), out = $(`${id}Value`);
       const paint = () => {
         fill(el);
@@ -122,11 +121,6 @@ export class Hud {
       });
       paint();
     }
-    $('subsOn').addEventListener('click', () => {
-      this.subsOn = !this.subsOn;
-      $('subsOn').setAttribute('aria-checked', this.subsOn);
-      if (!this.subsOn) $('subs').classList.remove('on');
-    });
 
     // ---- settings
     choices($('viewTabs'), VIEWS, (v) => game.setView(v));
@@ -253,17 +247,6 @@ export class Hud {
     this.sound(Volume2);
   }
 
-  setSubtitle(line) {
-    const el = $('subs');
-    if (!line || !this.subsOn) {
-      el.classList.remove('on');
-      return;
-    }
-    $('subWho').textContent = line.name;
-    $('subText').textContent = line.text;
-    el.classList.add('on');
-  }
-
   toast(html, ms = 5200) {
     const t = document.createElement('div');
     t.className = 'toast';
@@ -297,7 +280,7 @@ export class Hud {
     $('ridersSub').textContent = metN === RIDERS.length ? 'You have met everyone. They will ride again.' : `${metN} of ${RIDERS.length} met. Some only ride at certain hours.`;
     $('riderGrid').innerHTML = RIDERS.map((r) => {
       const met = !!st.met[r.id];
-      const name = VOICES[r.id].name;
+      const name = r.name;
       const where = `${city.poi[r.from].name} → ${city.poi[r.to].name}`;
       const when = r.hours ? `Rides between ${hourText(r.hours[0])} and ${hourText(r.hours[1])}.` : 'Rides at any hour.';
       return `<div class="rider ${met ? 'met' : ''}">

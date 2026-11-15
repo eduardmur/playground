@@ -145,7 +145,7 @@ export class Robot {
     this.phase = Math.random() * TAU;
     this.seed = Math.random() * 100;
     this.rate = 4.9;
-    this.s = { walk: 0, wave: 0, brolly: 0, yaw: 0, nod: 0, call: 0 };
+    this.s = { walk: 0, wave: 0, brolly: 0, yaw: 0 };
     if (look) this.setLook(look);
   }
 
@@ -161,7 +161,7 @@ export class Robot {
       this.umbrella.visible = false;
     }
     const s = this.s;
-    s.walk = s.wave = s.brolly = s.yaw = s.nod = s.call = 0;
+    s.walk = s.wave = s.brolly = s.yaw = 0;
   }
 
   _umbrella() {
@@ -316,8 +316,8 @@ export class Robot {
   /**
    * The group's origin is the seat's: its floor is at y = seat.floorY, the hip joint belongs at (0, seat.hipY, seat.hipZ).
    * o: { time, enter (0 settled .. 1 still half out of the door), side (+1: the door is on +X),
-   *      talk (0..1 while speaking), turn (-1 out of the window .. +1 toward the other seat), lean, pitch (the car's motion),
-   *      hold: null | 'call' (for as long as a call lasts) | 'cake' }
+   *      turn (-1 out of the window .. +1 toward the other seat), lean, pitch (the car's motion),
+   *      hold: null | 'cake' }
    */
   sit(dt, o, seat) {
     const b = this.bones, s = this.s;
@@ -345,25 +345,17 @@ export class Robot {
     const sway = o.lean;
     b[B.spine].rotation.set(-0.05 + 0.005 * hum, 0, sway * 0.6);
     b[B.chest].rotation.set(-0.07 - 0.1 * e, 0, sway * 0.6);
-    // the head wanders, turns to whoever is talking, nods along with its own voice
-    s.call = damp(s.call, o.hold === 'call' ? 1 : 0, 3.2, dt);
-    const call = smooth(s.call); // 0..1: how far the hand is on its way to the ear, or back from it
-    const busy = 1 - 0.7 * call;
-    const idle = (Math.sin(t * 0.23) * 0.12 + Math.sin(t * 0.61 + 1.3) * 0.05) * busy;
-    s.yaw = damp(s.yaw, o.turn * 0.55 * side * busy + idle, 2.2, dt);
-    s.nod = damp(s.nod, o.talk, 10, dt);
-    const yaw = s.yaw + Math.sin(t * 7.3) * 0.03 * s.nod;
-    const nod = Math.sin(t * 5.1) * 0.04 * s.nod + Math.sin(t * 0.4) * 0.02;
-    const tilt = -side * 0.09 * call;
-    b[B.neck].rotation.set(-0.17 - 0.22 * e + nod * 0.5, yaw * 0.45, -sway * 0.5 + tilt * 0.4);
-    b[B.head].rotation.set(-0.15 + nod, yaw * 0.55, -sway * 0.3 + tilt);
+    // the head wanders, and turns to the window now and then
+    const idle = Math.sin(t * 0.23) * 0.12 + Math.sin(t * 0.61 + 1.3) * 0.05;
+    s.yaw = damp(s.yaw, o.turn * 0.55 * side + idle, 2.2, dt);
+    const nod = Math.sin(t * 0.4) * 0.02;
+    b[B.neck].rotation.set(-0.17 - 0.22 * e + nod * 0.5, s.yaw * 0.45, -sway * 0.5);
+    b[B.head].rotation.set(-0.15 + nod, s.yaw * 0.55, -sway * 0.3);
 
-    // hands: on the thighs unless they are busy
+    // hands: on the thighs, or round whatever is on the knees
     const m = this._chest();
-    const talk = s.nod;
     for (let i = 0; i < 2; i++) {
       const out = i ? -1 : 1; // which side of the body this arm is on
-      const door = out === side; // the arm nearer the door
       const hand = b[i ? B.handL : B.handR];
       // on top of the thigh, a little short of the knee
       const along = 0.6 * LT;
@@ -377,19 +369,8 @@ export class Robot {
         px = out;
         py = -0.4;
         pz = 0.5;
-      } else if (!door && talk > 0.02) {
-        // the free hand lifts off the knee to make a point
-        y += talk * (0.07 + 0.03 * Math.sin(t * 3.1));
-        z -= talk * 0.04;
-        x -= out * talk * 0.03 * Math.sin(t * 2.3);
       }
       this._reach(i, _a.set(x, y, z).applyMatrix4(m), _p.set(px, py, pz).transformDirection(m), 1);
-      if (door && call > 0.001) {
-        // taking a call: the hand nearer the door goes to the side of the head, where the hearing is, and comes
-        // back to the knee when the call is over. Aimed from the chest, not the seat
-        this._reach(i, _a.set(out * 0.1, 0.2, -0.12), _p.set(out * 0.2, -1, 0.1), call);
-        hand.rotation.set(lerp(0.2, -0.15, call), 0, out * 0.1 * call);
-      }
     }
   }
 

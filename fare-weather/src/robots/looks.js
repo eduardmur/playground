@@ -19,7 +19,7 @@ export function randomLook(rnd) {
   };
 }
 
-/** Fill in whatever a rider in data/riders.js leaves out: any of the fields above, plus `voice`. */
+/** Fill in whatever a rider in data/riders.js leaves out: any of the fields above. */
 export function normalizeLook(raw) {
   if (raw._norm) return raw;
   return {
@@ -29,7 +29,6 @@ export function normalizeLook(raw) {
     brolly: raw.brolly || BROLLIES[0],
     // what a rider has on their knees
     cake: !!raw.cake,
-    voice: raw.voice,
     _norm: true,
   };
 }

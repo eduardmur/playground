@@ -1,6 +1,6 @@
 # Fare Weather
 
-A lofi robotaxi shift in a city of robots. Nobody is driving: you ride along in a driverless cab as it picks robots up, one at a time, takes them where they are going, and listens. Change the sky whenever you like.
+A lofi robotaxi shift in a city of robots. Nobody is driving and nobody says a word: you ride along in a driverless cab as it picks robots up, one at a time, and takes them where they are going, with the road, the weather and the radio for company. Change the sky whenever you like.
 
 **Play it: https://eduardmur.github.io/playground/fare-weather/**
 
@@ -10,8 +10,8 @@ A lofi robotaxi shift in a city of robots. Nobody is driving: you ride along in 
 | --- | --- |
 | ![Stopped at a red light on a wet night, raindrops on the windscreen](screenshots/2-rain-night.jpg) | ![A snowy afternoon at a red light, brick shopfronts on the left, a white robot waiting at the kerb on the right](screenshots/3-snow.jpg) |
 | Rain at night | Snow |
-| ![A robot on the pavement with its arm raised as the cab pulls in toward it](screenshots/5-kerbside.jpg) | ![A plain white robot in its seat with its belt on and a hand to the side of its head, the street going by behind it](screenshots/4-riders.jpg) |
-| A fare flags the cab down | A rider on a call, from the cab's own camera |
+| ![A robot on the pavement with its arm raised as the cab pulls in toward it](screenshots/5-kerbside.jpg) | ![A plain white robot in its seat with its belt on, the street going by behind it](screenshots/4-riders.jpg) |
+| A fare flags the cab down | A rider, from the cab's own camera |
 
 Built with [Three.js](https://threejs.org/), with [Lucide](https://lucide.dev/) icons in the interface. The city, the cars, the cabin, the robots and the weather are all generated in code: there are no model or texture files. Sound is the exception by design: every sound has a built-in synthesised stand-in, and each one is replaced by a real recording as soon as you add it (see [Sound](#sound)).
 
@@ -26,7 +26,7 @@ Then open the address Vite prints (http://localhost:5173 by default). `npm run b
 
 ## Play
 
-There is nothing to steer and nothing to start: the game opens in the middle of a ride, with someone already on board. The cab takes fares on its own; you look around, set the weather and the hour, and overhear whoever is riding. Sound begins with your first click or key press, because a browser will not let a page make any before that.
+There is nothing to steer and nothing to start: the game opens in the middle of a ride, with someone already on board. The cab takes fares on its own; you look around, set the weather and the hour, and listen to the car, the street and the radio. Sound begins with your first click or key press, because a browser will not let a page make any before that.
 
 | Input | What it does |
 | --- | --- |
@@ -43,54 +43,47 @@ There is nothing to steer and nothing to start: the game opens in the middle of 
 | `J` | Riders you have met |
 | `H` | Hide the interface |
 
-The row of controls in the top corner opens three small panels: weather and time, sound (radio, the three volumes, subtitles) and settings (view, picture quality, the keys above).
+The row of controls in the top corner opens three small panels: weather and time, sound (the radio and the two volumes) and settings (view, picture quality, the keys above).
 
 Things to notice:
 
-- Sixteen riders have something to say, and most only ride at certain hours: a baker before dawn, concert-goers at night. Nobody makes conversation. Each says a few short things, mostly to themselves, with a good while between them. The Riders page keeps a line about each one you have carried.
+- Sixteen regulars ride, most only at certain hours: a baker before dawn, concert-goers at night. Nobody speaks. The Riders page keeps a line about each one you have carried: an interview that went well, a grandson running hot, a wedding cake nobody at the wedding can eat.
 - Wipers, headlights and street lamps look after themselves. Rain beads on the glass, runs up the windscreen at speed and back down at a red light, and stays out of the arc the wiper clears.
 - Wet roads mirror the street. Snow settles and muffles the tyres. Fog turns every lamp into a cone.
 - At about six in the evening the sun sets straight down the east-west streets.
 - The city belongs to robots: plain machines, a pale shell over a dark frame and a blank visor, one much like the next. Its shops are theirs too: battery swaps, repair, oil bars, spare parts. Some robots walk a dog; some dogs are out alone with a parcel on their back, and sit down to wait for the lights. All of them step round the lamp posts, trees, benches and bus shelters, and never stop where one is.
-- What the riders say is robot life: an interview that went well, a grandson running hot, an exam on cell chemistry, a wedding cake nobody at the wedding can eat.
 - Whoever ordered the ride waits at the kerb and flags the cab down as it comes up the street. In the rain they wait under an umbrella.
-- There is one rider at a time, in the seat by the kerb. They buckle up, look out of the window, and look round when the car speaks.
-- Someone who takes a call holds a hand to the side of the head for as long as it lasts, and lowers it when it is over.
+- There is one rider at a time, in the seat by the kerb. They buckle up and look out of the window.
 - The radio leans toward tracks that suit the weather and the hour.
 
 ## Sound
 
-The game plays from `public/audio/` wherever a recording exists and falls back to its own synthesis everywhere else: generated lo-fi on the radio, noise-and-filter stand-ins for the car and the street, and subtitles alone for voices. So it is complete without any audio files, and any file can be taken out or swapped on its own.
+There are two kinds of sound, and no voices: the car and the street (doors, belts, tyres, rain, thunder, the city outside), and the radio. The game plays from `public/audio/` wherever a recording exists and falls back to its own synthesis everywhere else: generated lo-fi on the radio, noise-and-filter stand-ins for the car and the street. So it is complete without any audio files, and any file can be taken out or swapped on its own.
 
-Every sound has a recording now, all made with ElevenLabs: 31 sound effects, six radio tracks, the car's voice and all sixteen riders (17 voices, 98 short clips). Together they are about 27 MB.
+Every sound has a recording now, all made with ElevenLabs: 31 sound effects and six radio tracks, about 24 MB together. The two sliders in the sound panel (radio, car and street) set the balance, and the browser remembers it.
 
-Voices are mixed just above the radio, which steps back a little while someone is speaking. The three sliders in the sound panel (radio, car and street, voices) change the balance, and the browser remembers it.
-
-[ELEVENLABS.md](ELEVENLABS.md) has a prompt for every sound, track, voice and spoken clip, each under the file name the game expects (the extension can be `.m4a`, `.mp3`, `.wav` or `.ogg`):
+[ELEVENLABS.md](ELEVENLABS.md) has a prompt for every sound and track, each under the file name the game expects (the extension can be `.m4a`, `.mp3`, `.wav` or `.ogg`):
 
 ```
 public/audio/sfx/door_open.m4a
 public/audio/music/rainy_window.m4a
-public/audio/voice/car/welcome_1.m4a
-public/audio/voice/maya/hello.m4a
 ```
 
 With the dev server running, the page reloads by itself when a file appears. Any extra file in `public/audio/music/` joins the radio playlist.
 
-The prompts and the riders' scripts live in `src/audio/manifest.js` and `src/data/riders.js`. After editing either, run `npm run prompts` to regenerate `ELEVENLABS.md`.
+The prompts live in `src/audio/manifest.js`. After editing it, run `npm run prompts` to regenerate `ELEVENLABS.md`.
 
 ### From takes to recordings
 
-A file dropped into `public/audio/` by hand works as it is. The recordings that are there now went through one more step, because generated takes arrive at very different volumes, with silence around them, and one line of speech at a time:
+A file dropped into `public/audio/` by hand works as it is. The recordings that are there now went through one more step, because generated takes arrive at very different volumes and with silence around them:
 
 ```bash
 npm run audio            # everything in takes/ -> public/audio/
-npm run audio -- voice   # or only sfx, music or voice
+npm run audio -- sfx     # or only sfx, or only music
 ```
 
 - `takes/` holds the raw takes (it is not in git): `takes/<kind>/index.json` lists them as `{ label, take, file }`, several takes to a label where there are any.
 - Sound effects are trimmed to the sound itself and levelled to match the stand-in they replace, so the volumes in the manifest keep their meaning. Beds also lose everything under 30 Hz: generated ambience carries a lot of rumble down there that nobody hears and that eats headroom.
-- Each spoken clip is one short line. The build brings them all to one loudness, holding down only the peaks that stand in the way; a line far quieter than the rest of its voice (a whisper) is left a little quieter.
 - Where a label has several takes the build picks one by measurement. `takes/picks.json` overrides that, and can keep only part of a take: `{ "sfx/blinker": { "take": 2, "keep": [[0.174, 0.212]] } }`. An entry can also ask for a longer fade-out, for a take that was cut off mid-sound (`"fade": 0.5`), or for a higher low cut on a bed (`"highpass": 100`).
 - The model does not play a set number of notes, however it is asked. A sound with `notes` in the manifest is therefore one recorded note played once per `[seconds, semitones]`: the request chime is a single marimba note, played twice.
 - What the game needs to know about a recording (the gain a bed is still owed) is written to `src/audio/recordings.json`. If you replace one of these files by hand, remove its entry there.
@@ -117,7 +110,7 @@ src/
     traffic.js       cars: lane following, car following, signals, right of way
     ego.js           the cab: routing, lane changes, pulling in and out
     pedestrians.js   robots and dogs on the pavements and crosswalks, stepping round what stands there
-    rides.js         the shift: request, pick-up, what the rider says on the way, drop-off
+    rides.js         the shift: request, pick-up, the trip, drop-off
   car/
     cabin.js         the interior, its doors and its light
     glass.js         raindrops, runs of water, mist and the wiper
@@ -136,8 +129,8 @@ src/
     recordings.json  what the build noted about each recording it made
     synth.js         the stand-ins
     lofi.js          the generated radio
-  data/riders.js     voices, riders and what each of them says
-  ui/hud.js          controls and their panels, subtitles, the Riders page
+  data/riders.js     the regulars: who rides, from where to where, at what hours
+  ui/hud.js          controls and their panels, the Riders page
 scripts/
   build-prompts.mjs  writes ELEVENLABS.md
   audio-tools.mjs    measures takes and builds the recordings from them

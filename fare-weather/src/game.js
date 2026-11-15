@@ -129,7 +129,6 @@ export class Game {
     this.audio = new AudioEngine();
     this.rides = new Rides(this);
     this.hud = new Hud(this);
-    this.audio.onSubtitle = (line) => this.hud.setSubtitle(line);
     this.audio.onTrack = (title) => this.hud.setTrack(title);
     this.rides.onFare = (f2) => this.hud.fare(f2);
     this.rides.onMet = (ride, first) => this.hud.met(ride, first);
@@ -384,7 +383,6 @@ export class Game {
   /** For tinkering: run the simulation ahead without drawing it. */
   skip(seconds) {
     const was = this.audio.instant;
-    this.audio.stopSpeech();
     this.audio.instant = true;
     for (let i = 0, n = Math.round(seconds / 0.033); i < n; i++) this.step(0.033);
     this.audio.instant = was;

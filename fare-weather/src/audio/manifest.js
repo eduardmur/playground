@@ -2,8 +2,8 @@
 //
 // The game looks for a recording at public/audio/<file>.(mp3|wav|m4a|ogg) and
 // falls back to a synthesised stand-in when there is none, so it can be played
-// before any of these exist. scripts/build-prompts.mjs prints this list, and
-// the scripts in data/riders.js, as ELEVENLABS.md.
+// before any of these exist. scripts/build-prompts.mjs prints this list as
+// ELEVENLABS.md.
 
 /**
  * Sound effects. `loop` ones are generated with ElevenLabs' loop option on.
@@ -208,5 +208,3 @@ export const MUSIC = [
 
 export const sfxFile = (id) => `sfx/${id}`;
 export const musicFile = (id) => `music/${id}`;
-export const riderFile = (riderId, clip) => `voice/${riderId}/${clip}`;
-export const carFile = (id) => `voice/car/${id}`;

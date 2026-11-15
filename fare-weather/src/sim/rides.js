@@ -1,11 +1,10 @@
-// The shift: a ride comes in, the cab drives to the kerb, someone gets in, says
-// a thing or two to themselves on the way, and gets out again. Each stage is a
-// generator that yields "wait this long", "wait until this is true" or "wait
-// for this promise", which keeps the sequence readable as a script.
-import { RIDERS, CAR_LINES, VOICES } from '../data/riders.js';
+// The shift: a ride comes in, the cab drives to the kerb, someone gets in, rides
+// without a word, and gets out again. Each stage is a generator that yields
+// "wait this long" or "wait until this is true", which keeps the sequence
+// readable as a script.
+import { RIDERS } from '../data/riders.js';
 import { Passenger } from '../car/passenger.js';
 import { normalizeLook } from '../robots/looks.js';
-import { riderFile, carFile } from '../audio/manifest.js';
 import { clamp, clockText, lerp, easeInOut } from '../core/utils.js';
 
 const NAMES = ['Alex', 'Jordan', 'Riley', 'Casey', 'Morgan', 'Avery', 'Quinn', 'Rowan', 'Sasha', 'Devon', 'Elliot', 'Harper', 'Jules', 'Kai', 'Lane', 'Micah', 'Noa', 'Reese', 'Sky', 'Tatum'];
@@ -29,10 +28,8 @@ export class Rides {
     this.status = { label: '', headline: 'Fare Weather', sub: '', rider: null, riderColor: null };
     this.statusT = 0;
     this.lastId = null;
-    this.sinceQuiet = 0;
-    this.said = {};
-    this.stopT = 0;
-    this.onMet = null; // (rider) when a scripted rider's trip is finished
+    this.sinceStranger = 0;
+    this.onMet = null; // (rider) when a regular's trip is finished
     this.onFare = null; // ({ name, fare, tip })
     this.stats = { trips: 0, meters: 0, earned: 0, met: {} };
     try {
@@ -66,22 +63,17 @@ export class Rides {
 
   // ------------------------------------------------------------ choosing a fare
 
-  /** One of the riders with something to say, as a ride: who, from where, to where. */
-  _scripted(r) {
+  /** One of the regulars in data/riders.js, as a ride: who, from where, to where. */
+  _regular(r) {
     const { city } = this.game;
-    return {
-      ...r, quiet: false,
-      look: normalizeLook({ ...r.look, voice: r.id }),
-      name: VOICES[r.id].name,
-      fromZone: city.poi[r.from], toZone: city.poi[r.to],
-    };
+    return { ...r, look: normalizeLook(r.look), fromZone: city.poi[r.from], toZone: city.poi[r.to] };
   }
 
   _pick() {
     const { city, ego, hour } = this.game;
     const fits = RIDERS.filter((r) => r.id !== this.lastId && (!r.hours || inHours(hour, r.hours)));
-    const wantQuiet = !fits.length || (this.sinceQuiet >= 2 && Math.random() < 0.3);
-    if (!wantQuiet) {
+    const stranger = !fits.length || (this.sinceStranger >= 2 && Math.random() < 0.3);
+    if (!stranger) {
       // whoever has ridden least goes first
       const least = Math.min(...fits.map((r) => this.stats.met[r.id] || 0));
       // and of those, most likely someone nearby, so the cab is not empty for long
@@ -96,10 +88,10 @@ export class Rides {
         roll -= w[i];
         if (roll <= 0) { r = pool[i]; break; }
       }
-      this.sinceQuiet++;
-      return this._scripted(r);
+      this.sinceStranger++;
+      return this._regular(r);
     }
-    this.sinceQuiet = 0;
+    this.sinceStranger = 0;
     // an ordinary fare between two addresses: someone who just wants to get there
     const zones = city.zones;
     let from = null, to = null;
@@ -116,7 +108,7 @@ export class Rides {
     }
     to = to || pick(zones);
     return {
-      id: null, quiet: true, color: '#7f8a96', name: pick(NAMES), fromZone: from, toZone: to,
+      id: null, color: '#7f8a96', name: pick(NAMES), fromZone: from, toZone: to,
       look: pick(this.game.peds.cast), // someone off the street
     };
   }
@@ -147,25 +139,6 @@ export class Rides {
     };
   }
 
-  /** One of the rider's own lines: `clip` names the recording (data/riders.js, clipsOf). */
-  _say(ride, clip, text) {
-    return this.game.audio.say(riderFile(ride.id, clip), [{ who: ride.id, name: ride.name, text }]);
-  }
-
-  /** Wait this long, or until the cab has arrived, whichever comes first. */
-  _pause(seconds) {
-    const end = this.game.time + seconds;
-    return () => this.arrived || this.game.time >= end;
-  }
-
-  /** One of the car's own lines for an occasion. */
-  _car(when) {
-    const opts = CAR_LINES.filter((l) => l.when === when);
-    if (!opts.length) return Promise.resolve();
-    const line = pick(opts);
-    return this.game.audio.say(carFile(line.id), [{ who: 'nim', name: 'Nim', text: line.text }]);
-  }
-
   _setStatus(s) {
     Object.assign(this.status, { label: '', headline: '', sub: '', rider: null, riderColor: null }, s);
     this.game.hud?.setRide(this.status);
@@ -185,16 +158,15 @@ export class Rides {
   /** The game opens in the middle of things: someone is already aboard and the cab is on its way. */
   *_opening() {
     const g = this.game, ego = g.ego, cabin = g.cabin;
-    // someone with a story, on their way somewhere a few minutes off; whoever has ridden least
+    // one of the regulars, on their way somewhere a few minutes off; whoever has ridden least
     const away = (r) => Math.hypot(g.city.poi[r.to].cx - ego.x, g.city.poi[r.to].cz - ego.z);
     const fits = RIDERS.filter((r) => (!r.hours || inHours(g.hour, r.hours)) && away(r) > 320 && away(r) < 1000);
     const least = Math.min(...fits.map((r) => this.stats.met[r.id] || 0));
-    // ?rider=maya opens with that rider whatever the hour: for hearing one voice or one scene
+    // ?rider=maya opens with that rider whatever the hour
     const asked = RIDERS.find((r) => r.id === g.params.get('rider'));
-    const ride = asked ? this._scripted(asked) : fits.length ? this._scripted(pick(fits.filter((r) => (this.stats.met[r.id] || 0) === least))) : this._pick();
+    const ride = asked ? this._regular(asked) : fits.length ? this._regular(pick(fits.filter((r) => (this.stats.met[r.id] || 0) === least))) : this._pick();
     this.ride = ride;
     this.lastId = ride.id;
-    this.said = {};
     const pass = (this.seat = new Passenger(ride.look, 1));
     cabin.seatAnchor.add(pass.group);
     pass.settle();
@@ -204,9 +176,7 @@ export class Rides {
     this.state = 'toDropoff';
     this._setStatus({ label: 'On board', headline: ride.name, sub: ride.toZone.name, rider: ride.name, riderColor: ride.color });
     ego.depart();
-    yield 2;
-    if (!ride.quiet) yield this._say(ride, 'hello', ride.hello);
-    yield* this._trip(ride);
+    yield* this._trip();
     yield* this._alighting(ride);
     this.ride = null;
   }
@@ -219,7 +189,6 @@ export class Rides {
 
     const ride = (this.ride = this._pick());
     this.lastId = ride.id;
-    this.said = {};
     const zf = ride.fromZone;
     // they are already waiting at the kerb
     this.figure = peds.addRider(...peds.clear(zf.cx + zf.nx * 1.35, zf.cz + zf.nz * 1.35), Math.atan2(zf.nx, zf.nz), ride.look);
@@ -242,7 +211,7 @@ export class Rides {
       yield () => this.arrived;
     }
     yield* this._boarding(ride);
-    yield* this._trip(ride);
+    yield* this._trip();
     yield* this._alighting(ride);
     this.ride = null;
   }
@@ -286,10 +255,7 @@ export class Rides {
     yield 1.35;
 
     this._setStatus({ label: 'On board', headline: ride.name, sub: ride.toZone.name, rider: ride.name, riderColor: ride.color });
-    if (ride.quiet) {
-      const h = g.hour;
-      yield this._car(h >= 4.5 && h < 11 ? 'welcome_morning' : h >= 18 || h < 4.5 ? 'welcome_night' : 'welcome');
-    } else yield this._say(ride, 'hello', ride.hello);
+    yield 0.6;
     audio.play('belt', { pan: 0.5 });
     pass.buckle();
     yield 0.55;
@@ -302,40 +268,9 @@ export class Rides {
     ego.depart();
   }
 
-  *_trip(ride) {
-    const g = this.game, ego = g.ego, audio = g.audio;
+  *_trip() {
     this.state = 'toDropoff';
     this.arrived = false;
-    yield () => ego.mode !== 'parked' || this.arrived;
-    yield this._pause(rand(5, 8));
-    // a word about the weather, now and then
-    const kind = g.weather.kind;
-    if (!this.arrived && ['rain', 'storm', 'fog', 'snow'].includes(kind) && Math.random() < (ride.quiet ? 0.8 : 0.3)) {
-      yield this._car(kind);
-    } else if (!this.arrived && ride.quiet && Math.random() < 0.5) {
-      yield this._car('depart');
-    }
-    if (!ride.quiet) {
-      // what the rider has to say: a few short things, with a good while between them. A call is the
-      // same with shorter gaps, the other end talking, and a hand at the ear from its first word to its last
-      const pass = this.seat;
-      yield this._pause(rand(4, 8));
-      for (let i = 0; i < ride.lines.length && !this.arrived; i++) {
-        yield () => !audio.talking;
-        if (ride.call && !pass.calling) {
-          pass.calling = true;
-          yield 1.2;
-        }
-        yield this._say(ride, String(i + 1), ride.lines[i]);
-        if (i < ride.lines.length - 1) yield this._pause(ride.call ? rand(2.5, 4.5) : rand(9, 16));
-      }
-      if (pass.calling) {
-        yield this._pause(0.9);
-        pass.calling = false;
-      }
-    }
-    yield () => this.arrived || ego.remaining() < 150;
-    if (!this.arrived && !audio.talking && Math.random() < 0.55) yield this._car('near');
     yield () => this.arrived;
   }
 
@@ -344,13 +279,9 @@ export class Rides {
     const zt = ride.toZone, pass = this.seat;
     this.state = 'alighting';
     ego.hazard = true;
-    pass.calling = false;
     audio.play('chime_arrive');
     this._setStatus({ label: 'Arrived', headline: zt.name, sub: zt.poi ? zt.address : '', rider: ride.name, riderColor: ride.color });
-    yield 0.9;
-    yield () => !audio.talking;
-    if (ride.quiet) yield this._car('arrive');
-    else yield this._say(ride, 'bye', ride.bye);
+    yield 1.2;
 
     audio.play('belt_off', { pan: 0.5 });
     yield 0.4;
@@ -395,14 +326,13 @@ export class Rides {
     this.save();
     this.onFare?.({ name: ride.name, fare, tip, color: ride.color });
     if (ride.id) this.onMet?.(ride, this.stats.met[ride.id] === 1);
-    if (ride.quiet && Math.random() < 0.5) yield this._car('bye');
     yield 1;
   }
 
   // ------------------------------------------------------------ each frame
 
   update(dt) {
-    const g = this.game, ego = g.ego, audio = g.audio;
+    const g = this.game, ego = g.ego;
     // run the script
     for (let guard = 0; guard < 12 && this.co; guard++) {
       if (this.wait > 0) {
@@ -410,10 +340,8 @@ export class Rides {
         break;
       }
       if (this.until) {
-        // when fast-forwarding, nobody waits for a line to finish
-        if (!(this.speech && g.audio.instant) && !this.until()) break;
+        if (!this.until()) break;
         this.until = null;
-        this.speech = false;
       }
       const r = this.co.next();
       if (r.done) {
@@ -423,13 +351,6 @@ export class Rides {
       const v = r.value;
       if (typeof v === 'number') this.wait = v;
       else if (typeof v === 'function') this.until = v;
-      else if (v && typeof v.then === 'function') {
-        if (g.audio.instant) continue; // fast-forwarding: nothing is being said
-        let done = false;
-        v.then(() => (done = true), () => (done = true));
-        this.until = () => done;
-        this.speech = true;
-      }
     }
 
     // whoever is waiting flags the cab down as it comes up the street
@@ -439,25 +360,12 @@ export class Rides {
       this.figure.wave = d < 42 && d > 6 ? 1 : 0;
     }
 
-    // the rider in their seat: looks out of the window now and then, and toward the screen when the car speaks
+    // the rider in their seat: rides the car's motion, and looks out of the window now and then
     const p = this.seat;
     if (p) {
       const lean = clamp(ego.latAcc * 0.022, -0.09, 0.09), pitch = clamp(-ego.acc * 0.012, -0.03, 0.05);
-      const mine = audio.speaking === p.look.voice;
-      const other = audio.speaking && !mine;
       const gaze = Math.sin(g.time * 0.11 + p.seed) > 0.55 ? -0.9 : 0;
-      p.update(dt, g.time, mine ? Math.min(1, audio.voiceLevel) : 0, other ? 0.8 : gaze, lean, pitch);
-    }
-
-    // small talk from the car when it is held up
-    if (this.state === 'toDropoff' && !audio.talking) {
-      if (ego.v < 0.2 && ego.mode !== 'parked') this.stopT += dt;
-      else this.stopT = 0;
-      if (this.stopT > 2.5 && !this.said.held) {
-        this.said.held = true;
-        if (g.pedGap < 30 && Math.random() < 0.5) this._car('crossing');
-        else if (ego.piece.isLane && ego.piece.to.sig[ego.piece.dir % 2] === 2 && Math.random() < 0.25) this._car('light');
-      }
+      p.update(dt, g.time, gaze, lean, pitch);
     }
 
     // keep the trip text current

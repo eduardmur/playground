@@ -1,12 +1,12 @@
-// Sound. Every id in the manifest is played from a recording in public/audio/
-// when one exists and from a synthesised stand-in when it does not, so the two
-// can be mixed freely while the real audio is being made.
+// Sound: the car, the street, the weather and the radio. Nobody speaks. Every id
+// in the manifest is played from a recording in public/audio/ when one exists
+// and from a synthesised stand-in when it does not, so the two can be mixed
+// freely.
 import files from 'virtual:audio-index';
 import NOTES from './recordings.json';
 import { SFX, MUSIC, sfxFile } from './manifest.js';
 import { synthBuffer } from './synth.js';
 import { Lofi, LOFI_TRACKS } from './lofi.js';
-import { plain, weight } from '../data/riders.js';
 import { clamp, clamp01, damp, lerp, smoothstep } from '../core/utils.js';
 
 /** 'sfx/door_open' -> 'audio/sfx/door_open.mp3' for every file that is really there. */
@@ -90,31 +90,24 @@ export class AudioEngine {
   constructor() {
     this.ctx = null;
     this.ready = false;
-    this.buffers = new Map(); // key -> AudioBuffer (recorded sound effects; voices are not kept)
+    this.buffers = new Map(); // key -> AudioBuffer: the recorded sound effects
     this.loading = new Map();
-    // voices sit just above the radio (about 2 LU over it while it is ducked): what is said in the cab is
-    // part of the evening, not an announcement
-    this.vol = { master: 0.9, music: 0.6, ambience: 0.8, voice: 0.55 };
+    this.vol = { master: 0.9, music: 0.6, ambience: 0.8 };
     try {
-      const { v, ...saved } = JSON.parse(localStorage.getItem('fare-weather.volume') || '{}');
-      if (v !== 2 && saved.voice === 1) delete saved.voice; // saved when voices were full up by default: take the new default
-      Object.assign(this.vol, saved);
+      // whatever was saved, by this version or an older one with more sliders: only the ones there are now
+      const saved = JSON.parse(localStorage.getItem('fare-weather.volume') || '{}');
+      for (const k of Object.keys(this.vol)) if (typeof saved[k] === 'number') this.vol[k] = clamp01(saved[k]);
     } catch {
       /* fine */
     }
     this.musicOn = true;
-    this.onSubtitle = null; // ({ who, name, text } | null)
     this.onTrack = null; // (title)
-    this.speaking = null; // voice id currently talking, for lip-less nodding
-    this.voiceLevel = 0;
     this.trackTitle = '';
     this.eventT = { horn: 30, siren: 150, puddle: 4 };
     this.mood = [];
     this.door = 0;
-    this._say = null;
-    this.instant = false;
+    this.instant = false; // fast-forwarding: nothing is played
     this.hasFiles = INDEX.size > 0;
-    this.hasVoices = [...INDEX.keys()].some((k) => k.startsWith('voice/'));
   }
 
   has(key) {
@@ -149,22 +142,13 @@ export class AudioEngine {
     this.outFilter.type = 'lowpass';
     this.outFilter.frequency.value = 800;
     this.outBus.connect(this.outFilter).connect(this.master);
-    // riders and the car's own voice. Heads nod to the voice as recorded, however far down it is turned
-    this.voiceIn = ctx.createGain();
-    this.voiceBus = ctx.createGain();
-    this.analyser = ctx.createAnalyser();
-    this.analyser.fftSize = 256;
-    this._wave = new Uint8Array(this.analyser.fftSize);
-    this.voiceIn.connect(this.analyser);
-    this.voiceIn.connect(this.voiceBus).connect(this.master);
     // radio: plays "through the speakers", so it gets a touch of cabin colouring
     this.musicBus = ctx.createGain();
-    this.musicDuck = ctx.createGain();
     const mEq = ctx.createBiquadFilter();
     mEq.type = 'highshelf';
     mEq.frequency.value = 6000;
     mEq.gain.value = -3;
-    this.musicBus.connect(mEq).connect(this.musicDuck).connect(this.master);
+    this.musicBus.connect(mEq).connect(this.master);
     this._applyVolumes();
 
     this.beds = {};
@@ -188,7 +172,6 @@ export class AudioEngine {
     if (!this.ctx) return;
     const v = this.vol;
     this.inBus.gain.value = v.ambience;
-    this.voiceBus.gain.value = v.voice;
     this.musicBus.gain.value = v.music;
     this.master.gain.setTargetAtTime(v.master, this.ctx.currentTime, 0.05);
   }
@@ -197,30 +180,25 @@ export class AudioEngine {
     this.vol[name] = clamp01(value);
     this._applyVolumes();
     try {
-      localStorage.setItem('fare-weather.volume', JSON.stringify({ ...this.vol, v: 2 }));
+      localStorage.setItem('fare-weather.volume', JSON.stringify(this.vol));
     } catch {
       /* fine */
     }
   }
 
-  /** Fetch and decode a recording. Nothing is kept: a spoken clip is heard once in a long while. */
-  decode(key) {
-    const url = INDEX.get(key);
-    if (!url || !this.ctx) return Promise.resolve(null);
-    return fetch(url)
-      .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(r.status))))
-      .then((ab) => this.ctx.decodeAudioData(ab))
-      .catch(() => null);
-  }
-
-  /** The same, kept for good: sound effects are played again and again. */
+  /** Fetch and decode a recorded sound effect, once: they are played again and again. */
   load(key) {
     if (this.buffers.has(key)) return Promise.resolve(this.buffers.get(key));
     if (this.loading.has(key)) return this.loading.get(key);
-    const p = this.decode(key).then((buf) => {
-      if (buf) this.buffers.set(key, buf);
-      return buf;
-    });
+    const url = INDEX.get(key);
+    const p = (url && this.ctx ? fetch(url) : Promise.reject(new Error('no such recording')))
+      .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(r.status))))
+      .then((ab) => this.ctx.decodeAudioData(ab))
+      .catch(() => null)
+      .then((buf) => {
+        if (buf) this.buffers.set(key, buf);
+        return buf;
+      });
     this.loading.set(key, p);
     return p;
   }
@@ -276,78 +254,6 @@ export class AudioEngine {
     src.connect(g);
     node.connect(opts.out ? this.outBus : this.inBus);
     src.start(ctx.currentTime + (opts.delay || 0));
-  }
-
-  // ------------------------------------------------------------ voices
-
-  /**
-   * Speak a clip. `lines` is [{ who, name, text }], nearly always one line. With a recording
-   * the subtitle stays up for as long as it lasts (several lines share its length by their own);
-   * without one it is shown at reading pace.
-   * Returns a promise that resolves when it is over (or was cut short).
-   */
-  say(key, lines) {
-    this.stopSpeech();
-    if (this.instant) return Promise.resolve(); // fast-forwarding
-    const total = lines.reduce((s, l) => s + weight(l.text), 0);
-    const state = { stopped: false, timers: [], src: null };
-    this._say = state;
-    return new Promise((resolve) => {
-      const finish = () => {
-        if (state.done) return;
-        state.done = true;
-        for (const t of state.timers) clearTimeout(t);
-        if (this._say === state) {
-          this._say = null;
-          this.speaking = null;
-          this.onSubtitle?.(null);
-        }
-        resolve();
-      };
-      state.finish = finish;
-      const run = (duration, hasAudio) => {
-        if (state.stopped) return finish();
-        state.silent = !hasAudio; // subtitles only: no need to duck the radio
-        let at = 0;
-        for (const line of lines) {
-          state.timers.push(setTimeout(() => {
-            if (state.stopped) return;
-            this.speaking = line.who;
-            this.onSubtitle?.({ who: line.who, name: line.name, text: plain(line.text), silent: !hasAudio });
-          }, at * 1000));
-          at += (weight(line.text) / total) * duration;
-        }
-        state.timers.push(setTimeout(finish, duration * 1000 + 250));
-      };
-      const fallback = () => run(Math.max(1.6, total * 0.058), false);
-      if (!this.ready || !INDEX.has(key)) return fallback();
-      this.decode(key).then((buf) => {
-        if (state.stopped) return finish();
-        if (!buf) return fallback();
-        const src = this.ctx.createBufferSource();
-        src.buffer = buf;
-        src.connect(this.voiceIn);
-        src.start();
-        state.src = src;
-        run(buf.duration, true);
-      });
-    });
-  }
-
-  stopSpeech() {
-    const s = this._say;
-    if (!s) return;
-    s.stopped = true;
-    try {
-      s.src?.stop();
-    } catch {
-      /* already stopped */
-    }
-    s.finish?.();
-  }
-
-  get talking() {
-    return !!this._say;
   }
 
   // ------------------------------------------------------------ radio
@@ -435,7 +341,6 @@ export class AudioEngine {
    */
   update(dt, s) {
     if (!this.ready) return;
-    const ctx = this.ctx;
     this.lofi.tick();
 
     const door = (this.door = damp(this.door, s.door, 5, dt));
@@ -456,18 +361,6 @@ export class AudioEngine {
     // a door open lets the street in
     this.outFilter.frequency.value = lerp(750, 9000, door * door);
     this.outBus.gain.value = this.vol.ambience * lerp(0.6, 1.7, door);
-
-    // the radio steps back a little while someone is talking: enough to hear them over it, not enough to pump
-    const duck = this._say && !this._say.silent ? 0.65 : 1;
-    this.musicDuck.gain.value = damp(this.musicDuck.gain.value, duck, 3, dt);
-
-    // how loud the voice is right now, for heads that nod along
-    if (this._say && this._say.src) {
-      this.analyser.getByteTimeDomainData(this._wave);
-      let peak = 0;
-      for (let i = 0; i < this._wave.length; i += 4) peak = Math.max(peak, Math.abs(this._wave[i] - 128));
-      this.voiceLevel = damp(this.voiceLevel, peak / 60, 14, dt);
-    } else this.voiceLevel = damp(this.voiceLevel, this._say ? 0.35 + 0.3 * Math.sin(ctx.currentTime * 9) : 0, 8, dt);
 
     // the city, now and then
     const e = this.eventT;

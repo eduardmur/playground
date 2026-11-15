@@ -1,11 +1,11 @@
 // Turns the raw takes in takes/ into the recordings the game plays from public/audio/.
 //
-//   node scripts/audio-tools.mjs probe [--voice] <file...>     measure any audio files
-//   node scripts/audio-tools.mjs build [sfx] [music] [voice]   takes/ -> public/audio/ (all three if none is named)
+//   node scripts/audio-tools.mjs probe <file...>         measure any audio files
+//   node scripts/audio-tools.mjs build [sfx] [music]     takes/ -> public/audio/ (both if neither is named)
 //
 // takes/<kind>/index.json lists what has been recorded: [{ label, take, file }], where label is
-// "sfx/<id>", "music/<id>", "car/<id>" or "<rider>/<clip>". Where a label has several
-// takes the build picks one by measurement. takes/picks.json overrides it: { "<label>": <take> }, or
+// "sfx/<id>" or "music/<id>". Where a label has several takes the build picks one by
+// measurement. takes/picks.json overrides it: { "<label>": <take> }, or
 // { "<label>": { "take": <take>, "keep": [[from, to], ...] } } to use only those stretches of the
 // take (in seconds), joined end to end: for a take with a gap in it, or one click too many. Two more
 // things an entry can ask for: "fade": seconds, a longer fade-out for a one-shot that was cut off
@@ -18,8 +18,6 @@
 //          to the game as `gain`. A sound whose manifest entry has `notes` is one recorded note
 //          played once per [seconds, semitones]: the model will not play a set number of notes.
 //   music  levelled to one loudness, with the silence trimmed from the end
-//   voice  each clip is one line: trimmed and levelled (peaks that stand in the way are held down,
-//          and a line far quieter than the rest of its voice is left a little quieter)
 //
 // What the game needs to know about a recording (the gain a bed is still owed) goes to
 // src/audio/recordings.json, with the recording's length, so the note is ignored if the file is
@@ -45,12 +43,9 @@ const db = (x) => (x > 1e-9 ? 20 * Math.log10(x) : -180);
 const amp = (d) => 10 ** (d / 20);
 const round = (x, n = 2) => Math.round(x * 10 ** n) / 10 ** n;
 const pct = (sorted, p) => (sorted.length ? sorted[Math.min(sorted.length - 1, Math.floor(p * sorted.length))] : NaN);
-const median = (list) => pct([...list].sort((p, q) => p - q), 0.5);
 
 // What the game should hear, in dB(A) re full scale (see loudness()).
-const SPEECH_LEVEL = -20; // the talking parts of a line
-const SPEECH_WINDOW = 6; // dB: how far a line's gain may stray from what the rest of that voice needed
-const MUSIC_LEVEL = -26; // a radio track, before the game's own music volume: clear of the road noise, well under a voice
+const MUSIC_LEVEL = -26; // a radio track, before the game's own music volume: clear of the road noise
 const CEILING = -1; // no sample goes above this, dBFS
 const BED_HIGHPASS = 30; // Hz: what a bed loses at the bottom, unless takes/picks.json says otherwise
 
@@ -285,44 +280,6 @@ function level(a, have, want) {
   return [scaled(a, g), g, want - have - g];
 }
 
-/**
- * Brings the few samples of `a` that go over the ceiling down to it and leaves the rest alone: a
- * look-ahead limiter. The gain is the least that any sample within 6 ms needs, averaged over the
- * same span, so it never jumps and never lets a peak through.
- */
-function limit(a, ceiling = amp(CEILING)) {
-  const n = a.ch[0].length, W = Math.round(0.006 * a.rate);
-  const need = new Float32Array(n);
-  let over = false;
-  for (let i = 0; i < n; i++) {
-    let p = 0;
-    for (const c of a.ch) p = Math.max(p, Math.abs(c[i]));
-    need[i] = p > ceiling ? ceiling / p : 1;
-    over ||= p > ceiling;
-  }
-  if (!over) return a;
-  const least = new Float32Array(n), queue = new Int32Array(n);
-  for (let i = 0, j = 0, head = 0, tail = 0; i < n; i++) {
-    for (; j < Math.min(n, i + W + 1); j++) {
-      while (tail > head && need[queue[tail - 1]] >= need[j]) tail--;
-      queue[tail++] = j;
-    }
-    while (queue[head] < i - W) head++;
-    least[i] = need[queue[head]];
-  }
-  const sum = new Float64Array(n + 1);
-  for (let i = 0; i < n; i++) sum[i + 1] = sum[i] + least[i];
-  const ch = a.ch.map((c) => {
-    const out = new Float32Array(n);
-    for (let i = 0; i < n; i++) {
-      const lo = Math.max(0, i - W), hi = Math.min(n - 1, i + W);
-      out[i] = (c[i] * (sum[hi + 1] - sum[lo])) / (hi - lo + 1);
-    }
-    return out;
-  });
-  return { rate: a.rate, ch };
-}
-
 const seconds = (a) => round(a.ch[0].length / a.rate, 2);
 const signed = (g) => (g >= 0 ? '+' : '') + round(g, 1);
 
@@ -404,7 +361,7 @@ export function loudness(a) {
   return {
     whole: d(sum / count), // the average over the whole file: for beds
     loudest: d(top), // its loudest moment: for one-shots
-    active: d(act / Math.max(1, actN)), // the average of the parts within 25 dB of the loudest: for speech and music
+    active: d(act / Math.max(1, actN)), // the average of the parts within 25 dB of the loudest: for music
   };
 }
 
@@ -448,72 +405,6 @@ export function measure(a) {
     wander: secDb.length > 2 ? round(secDb[secDb.length - 1] - secDb[0], 1) : 0, // loudest second minus quietest, dB
     onsets,
     loudA: round(l.whole, 1), topA: round(l.loudest, 1), activeA: round(l.active, 1),
-  };
-}
-
-/** Where the weight of the spectrum sits, in Hz: higher is brighter. */
-function centroid(x, rate) {
-  const M = 2048, re = new Float32Array(M), im = new Float32Array(M);
-  let num = 0, den = 0;
-  for (let s = 0; s + M <= x.length; s += M) {
-    let e = 0;
-    for (let i = 0; i < M; i++) {
-      const v = x[s + i] * (0.5 - 0.5 * Math.cos((2 * Math.PI * i) / (M - 1)));
-      re[i] = v; im[i] = 0; e += v * v;
-    }
-    if (Math.sqrt(e / M) < QUIET) continue;
-    fft(re, im);
-    for (let k = 1; k < M / 2; k++) {
-      const m = Math.hypot(re[k], im[k]);
-      num += m * ((k * rate) / M);
-      den += m;
-    }
-  }
-  return den ? num / den : 0;
-}
-
-/** Pitch and pace of a spoken take: what can be told about a voice without hearing it. */
-export function voiceStats(a) {
-  const x = mono(a);
-  // a quarter of the rate is plenty for pitch
-  const D = 4, r = a.rate / D, y = new Float32Array(Math.floor(x.length / D));
-  for (let i = 0; i < y.length; i++) y[i] = (x[i * D] + x[i * D + 1] + x[i * D + 2] + x[i * D + 3]) / 4;
-  const W = Math.round(r * 0.046), H = Math.round(r * 0.01);
-  const lo = Math.floor(r / 400), hi = Math.ceil(r / 70);
-  const f0 = [];
-  let total = 0;
-  for (let s = 0; s + W + hi < y.length; s += H) {
-    total++;
-    let e0 = 0;
-    for (let i = 0; i < W; i++) e0 += y[s + i] * y[s + i];
-    if (Math.sqrt(e0 / W) < amp(-40)) continue;
-    let best = 0, bestLag = 0;
-    const rs = new Float32Array(hi + 2);
-    for (let lag = lo; lag <= hi; lag++) {
-      let c = 0, e1 = 0;
-      for (let i = 0; i < W; i++) {
-        c += y[s + i] * y[s + i + lag];
-        e1 += y[s + i + lag] * y[s + i + lag];
-      }
-      const v = c / Math.sqrt(e0 * e1 + 1e-12);
-      rs[lag] = v;
-      if (v > best) { best = v; bestLag = lag; }
-    }
-    if (best < 0.6) continue;
-    // the shortest period that is nearly as good: keeps the estimate off the octave below
-    for (let lag = lo + 1; lag < bestLag; lag++) {
-      if (rs[lag] > 0.9 * best && rs[lag] >= rs[lag - 1] && rs[lag] >= rs[lag + 1]) { bestLag = lag; break; }
-    }
-    f0.push(r / bestLag);
-  }
-  f0.sort((p, q) => p - q);
-  return {
-    pitchHz: round(pct(f0, 0.5), 0),
-    pitchLowHz: round(pct(f0, 0.1), 0),
-    pitchHighHz: round(pct(f0, 0.9), 0),
-    rangeSemitones: round(12 * Math.log2(pct(f0, 0.9) / pct(f0, 0.1)), 1), // how much the voice moves
-    voiced: round(f0.length / Math.max(1, total), 2),
-    brightHz: round(centroid(x, a.rate), 0),
   };
 }
 
@@ -617,57 +508,6 @@ async function buildMusic(log) {
   }
 }
 
-async function buildVoice(log) {
-  const { RIDERS, CAR_LINES, clipsOf } = await import(pathToFileURL(join(ROOT, 'src', 'data', 'riders.js')).href);
-  const takes = takesOf('voice'), chosen = picks();
-  // every clip is one line in one voice; `label` is what its takes were recorded under
-  const clips = CAR_LINES.map((l) => ({ key: `voice/car/${l.id}`, who: 'nim', label: `car/${l.id}` }));
-  for (const r of RIDERS) for (const [clip] of clipsOf(r)) clips.push({ key: `voice/${r.id}/${clip}`, who: r.id, label: `${r.id}/${clip}` });
-  const ready = clips.filter((c) => takes.has(c.label));
-  // measure every take once; a voice's usual pitch is the middle of all its takes
-  const pitches = new Map();
-  for (const c of ready) {
-    c.cand = takes.get(c.label).map((t) => {
-      const a = decode(t.file);
-      return { ...t, a, pitch: voiceStats(a).pitchHz };
-    });
-    if (!pitches.has(c.who)) pitches.set(c.who, []);
-    pitches.get(c.who).push(...c.cand.map((x) => x.pitch).filter(Number.isFinite));
-  }
-  const usual = new Map([...pitches].map(([who, list]) => [who, median(list)]));
-  const off = (who, pitch) => (Number.isFinite(pitch) ? Math.abs(Math.log2(pitch / usual.get(who))) : 9);
-  // of several takes, the one that sounds most like the rest of that voice; and what it would take to bring it to level
-  const gains = new Map();
-  for (const c of ready) {
-    c.pick = c.cand.find((x) => x.take === chosen[c.label]?.take) || [...c.cand].sort((p, q) => off(c.who, p.pitch) - off(c.who, q.pitch))[0];
-    c.body = trim(c.pick.a);
-    c.gain = SPEECH_LEVEL - loudness(c.body).active;
-    if (!gains.has(c.who)) gains.set(c.who, []);
-    gains.get(c.who).push(c.gain);
-  }
-  const usualGain = new Map([...gains].map(([who, list]) => [who, median(list)]));
-  for (const c of ready) {
-    // every line at the same loudness, give or take: one spoken under the breath stays a little under, and
-    // where a laugh or a hard consonant stands in the way, only that is held down
-    const g = Math.max(usualGain.get(c.who) - SPEECH_WINDOW, Math.min(usualGain.get(c.who) + SPEECH_WINDOW, c.gain));
-    const held = Math.max(0, db(peakOf(c.body)) + g - CEILING);
-    const out = mono(limit(scaled(c.body, g)));
-    // a moment of quiet at each end, so nothing starts or stops on a click
-    const lead = Math.round(0.03 * RATE), mix = new Float32Array(lead + out.length + Math.round(0.05 * RATE));
-    mix.set(out, lead);
-    encode({ rate: RATE, ch: [mix] }, join(PUBLIC, `${c.key}.m4a`), 96000);
-    log(`${c.key}  ${round(mix.length / RATE, 2)} s  take ${c.pick.take} of ${c.cand.length}  gain ${signed(g)} dB` +
-      (Math.abs(g - c.gain) > 0.5 ? `  (${round(Math.abs(g - c.gain), 1)} dB ${g < c.gain ? 'under' : 'over'} the rest)` : '') + (held > 0.5 ? `  (peaks held ${round(held, 1)} dB)` : ''));
-  }
-  // a spoken clip needs nothing noted about it: clear what a build of longer clips left behind
-  const notes = readJson(NOTES, {});
-  for (const k of Object.keys(notes)) if (k.startsWith('voice/')) delete notes[k];
-  writeNotes(notes);
-  log(`usual pitch: ${[...usual].map(([who, hz]) => `${who} ${hz} Hz`).join(', ')}`);
-  const waiting = clips.length - ready.length;
-  if (waiting) log(`${waiting} clips have no take yet`);
-}
-
 // ------------------------------------------------------------------ command line
 
 async function main([cmd, ...rest]) {
@@ -676,18 +516,17 @@ async function main([cmd, ...rest]) {
   if (cmd === 'probe') {
     const rows = args.map((file) => {
       const a = decode(file);
-      return { file: basename(file), ...measure(a), ...(flags.has('--voice') ? voiceStats(a) : {}) };
+      return { file: basename(file), ...measure(a) };
     });
     if (flags.has('--json')) console.log(JSON.stringify(rows, null, 1));
     else console.table(rows);
   } else if (cmd === 'build') {
-    const kinds = args.length ? args : ['sfx', 'music', 'voice'];
+    const kinds = args.length ? args : ['sfx', 'music'];
     const log = (line) => console.log(line);
     if (kinds.includes('sfx')) await buildSfx(log);
     if (kinds.includes('music')) await buildMusic(log);
-    if (kinds.includes('voice')) await buildVoice(log);
   } else {
-    console.error('usage: audio-tools.mjs probe [--voice] [--json] <file...>\n       audio-tools.mjs build [sfx] [music] [voice]');
+    console.error('usage: audio-tools.mjs probe [--json] <file...>\n       audio-tools.mjs build [sfx] [music]');
     process.exit(1);
   }
 }
