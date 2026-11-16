@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { Dog } from './dog.js';
 import { BREEDS } from './breeds.js';
-import { clamp, damp } from '../core/utils.js';
+import { clamp, damp, angleDiff, dampAngle } from '../core/utils.js';
 import { WORLD } from '../world/terrain.js';
 import { CELL } from '../fx/particles.js';
 
@@ -24,10 +24,25 @@ export class Player {
       sprint: 0, swim: 0, tricks: new Set(), stick: 0, still: 0, lie: 0, night: 0, sunset: 0, drink: 0, lap: 0, zzz: 0,
     };
     this.burst = 0;
+    this.leavers = []; // dogs running off the title screen after you picked another
+    this.arrive = null; // the new pick, running in
+    this.spot = null; // where the dog stands on the title screen
     this.setBreed(breedId, true);
   }
 
-  setBreed(id, first = false) {
+  /** Free what a dog that has left the scene owned, but not the body it shares with its breed. */
+  _dispose(dog) {
+    this.game.scene.remove(dog.root);
+    dog.root.traverse((o) => {
+      if (o.isMesh && !o.geometry.userData.shared) o.geometry.dispose();
+    });
+  }
+
+  /**
+   * Become another breed. On the title screen the old dog runs off to one side and the new one runs
+   * in from the other (`dir`: 1 = the next breed, coming in from the right).
+   */
+  setBreed(id, first = false, dir = 1) {
     const g = this.game;
     const old = this.dog;
     const breed = BREEDS[id] || BREEDS.shiba;
@@ -36,17 +51,60 @@ export class Player {
     dog.isPlayer = true;
     dog.onEvent = (type, data, d) => g.dogEvent(type, data, d);
     if (old) {
-      dog.pos.copy(old.pos);
-      dog.heading = old.heading;
-      dog.posture = old.posture;
-      g.scene.remove(old.root);
-      old.root.traverse((o) => {
-        if (o.isMesh) o.geometry.dispose();
-      });
+      this.spot ||= { x: old.pos.x, y: old.pos.y, z: old.pos.z, posture: old.posture };
+      const S = this.spot;
+      g.cam.anchor = S; // the camera keeps to the spot while they run
+      g.cam.basis(_f, _r);
+      // off it goes, the way the old one was not coming from
+      this.leavers.push({ dog: old, dx: -_r.x * dir, dz: -_r.z * dir, t: 0 });
+      // and in comes the new one, from just outside the frame
+      const from = 4.5;
+      dog.place(S.x + _r.x * dir * from, S.z + _r.z * dir * from, Math.atan2(-_r.x * dir, -_r.z * dir), g.terrain);
+      dog.posture = 'stand';
+      this.arrive = { turning: false };
     }
     g.scene.add(dog.root);
     this.dog = dog;
-    if (!first) dog.doAct('spin', { dir: 1 });
+  }
+
+  /** The title screen's comings and goings. */
+  _titleRun(dt, t) {
+    const g = this.game;
+    for (let i = this.leavers.length - 1; i >= 0; i--) {
+      const l = this.leavers[i];
+      l.t += dt;
+      l.dog.move(dt, g, l.dx, l.dz, Math.min(this.runSpeed * 0.8, 1.5 + l.t * 6));
+      l.dog.update(dt, t);
+      if (l.t > 3 || Math.hypot(l.dog.pos.x - this.spot.x, l.dog.pos.z - this.spot.z) > 8) {
+        this._dispose(l.dog);
+        this.leavers.splice(i, 1);
+      }
+    }
+  }
+
+  /** Run the new pick in to the spot, turn it round, sit it down. True while it is still arriving. */
+  _arriving(dt) {
+    const g = this.game, dog = this.dog, S = this.spot, a = this.arrive;
+    if (!a || g.state !== 'title') {
+      this.arrive = null;
+      return false;
+    }
+    const dx = S.x - dog.pos.x, dz = S.z - dog.pos.z, d = Math.hypot(dx, dz);
+    if (!a.turning && d > 0.18) {
+      // slow down over the last metre or so
+      dog.move(dt, g, dx / d, dz / d, clamp(d * 2.6, 0.9, this.runSpeed * 0.75));
+      return true;
+    }
+    a.turning = true;
+    dog.move(dt, g, 0, 0, 0);
+    // three-quarters on to the camera, as the title screen first shows the dog (it keeps circling)
+    const face = g.cam.yaw + 1.0;
+    dog.heading = dampAngle(dog.heading, face, 6, dt);
+    if (Math.abs(angleDiff(dog.heading, face)) < 0.08 && dog.speed < 0.05) {
+      dog.setPosture(S.posture);
+      this.arrive = null;
+    }
+    return true;
   }
 
   // ------------------------------------------------------------------ tricks
@@ -179,13 +237,15 @@ export class Player {
       if (inp.hit('KeyE')) this.interact();
     }
 
+    if (this.leavers.length) this._titleRun(dt, t);
+
     g.cam.basis(_f, _r);
     const mx = playing ? inp.move.x : 0, my = playing ? inp.move.y : 0;
     const mag = Math.min(1, Math.hypot(mx, my));
     const wx = _f.x * my + _r.x * mx, wz = _f.z * my + _r.z * mx;
     const speed = mag > 0.05 ? (inp.run ? this.runSpeed : this.walkSpeed) * (inp.run ? 1 : Math.max(mag, 0.45)) : 0;
     const px = dog.pos.x, pz = dog.pos.z;
-    dog.move(dt, g, wx, wz, speed);
+    if (!this._arriving(dt)) dog.move(dt, g, wx, wz, speed);
     const stepDist = Math.hypot(dog.pos.x - px, dog.pos.z - pz);
 
     // mood

@@ -101,7 +101,7 @@ export class Game {
     this.scene.add(this.butterflies.mesh);
 
     this.cam.snapTo(this.player.dog);
-    this.cam.yaw = TITLE_YAW - 0.5;
+    this.cam.yaw = TITLE_YAW - 0.5; // the dog faces 1 rad off the camera: Player._arriving keeps to that
 
     // after dark a faint moonlit glow keeps your own dog readable
     this.fill = new THREE.PointLight('#a9bcff', 0, 7, 1.4);
@@ -237,6 +237,8 @@ export class Game {
     this.audio.init();
     this.ui.startGame();
     this.cam.mode = 'follow';
+    this.cam.anchor = null;
+    this.player.arrive = null;
     this.cam.userPitch = 0.3;
     this.player.dog.posture = 'stand';
     this.input.lastInputAt = performance.now();
@@ -248,7 +250,7 @@ export class Game {
   cycleBreed(dir) {
     const i = PLAYER_BREEDS.indexOf(this.player.breedId);
     const id = PLAYER_BREEDS[(i + dir + PLAYER_BREEDS.length) % PLAYER_BREEDS.length];
-    this.player.setBreed(id);
+    this.player.setBreed(id, false, dir);
     this._dogs = null;
     this.save.breed = id;
     this.store.write();

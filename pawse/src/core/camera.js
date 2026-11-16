@@ -16,6 +16,7 @@ export class CameraRig {
     this.userDist = 3.6;
     this.userPitch = 0.3;
     this.target = new THREE.Vector3();
+    this.anchor = null; // { x, y, z } to look at instead of the dog, on the title screen
     this.mode = 'title';
     this.baseFov = 50;
     this.fov = 50;
@@ -62,9 +63,10 @@ export class CameraRig {
       this.pitch = damp(this.pitch, lerp(this.userPitch, Math.min(this.userPitch, 0.24), this.cine * 0.7), 5, dt);
     }
 
-    // follow the dog
-    const tx = dog.pos.x, tz = dog.pos.z;
-    const ty = dog.pos.y + (this.mode === 'title' ? 0.62 : 0.52) * sc + 0.08;
+    // follow the dog; on the title screen, keep to the spot it stands on while dogs run in and out
+    const focus = this.mode === 'title' && this.anchor ? this.anchor : dog.pos;
+    const tx = focus.x, tz = focus.z;
+    const ty = focus.y + (this.mode === 'title' ? 0.62 : 0.52) * sc + 0.08;
     const k = this.mode === 'title' ? 6 : 11;
     this.target.x = damp(this.target.x, tx, k, dt);
     this.target.z = damp(this.target.z, tz, k, dt);
