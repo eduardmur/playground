@@ -11,7 +11,7 @@ A quiet day at the dog park. You are a dog. There is nowhere you need to be.
 | ![Four dogs playing in a meadow of wildflowers](screenshots/2-friends.jpg) | ![Two dogs howling by the fountain plaza at night, under street lamps](screenshots/3-night.jpg) |
 | Making friends in the meadow | Howling at night by the fountain |
 
-Built with [Three.js](https://threejs.org/). Everything on screen is generated in code: there are no models or textures. Each dog is one smooth body, blended from simple shapes and skinned to its joints, under a coat of shell fur whose length differs by breed. The sounds and the music were recorded with [ElevenLabs](https://elevenlabs.io/) (sound effects and music models; the prompts are in `src/audio/manifest.js`), and the game falls back to its own synthesised versions wherever a recording is missing.
+Built with [Three.js](https://threejs.org/). Everything on screen is generated in code: there are no models or textures. The sounds and the music were recorded with [ElevenLabs](https://elevenlabs.io/) (sound effects and music models; the prompts are in `src/audio/manifest.js`), and the game falls back to its own synthesised versions wherever a recording is missing.
 
 ## Run it
 
@@ -82,8 +82,6 @@ src/
   entities/
     breeds.js        dog breeds and the park regulars
     dogRig.js        builds a dog from a breed description
-    skin.js          one smooth skinned body from blended distance fields
-    fur.js           shell fur: layered strands cut in the shader
     dog.js           procedural animation: leg IK, gaits, postures, tricks
     player.js        you
     npc.js           the other dogs (wander, greet, tag, fetch, nap...)

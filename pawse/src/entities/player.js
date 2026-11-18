@@ -30,11 +30,11 @@ export class Player {
     this.setBreed(breedId, true);
   }
 
-  /** Free what a dog that has left the scene owned, but not the body it shares with its breed. */
+  /** Take a dog that has left the scene away and free its geometry. */
   _dispose(dog) {
     this.game.scene.remove(dog.root);
     dog.root.traverse((o) => {
-      if (o.isMesh && !o.geometry.userData.shared) o.geometry.dispose();
+      if (o.isMesh) o.geometry.dispose();
     });
   }
 

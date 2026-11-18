@@ -744,7 +744,9 @@ export class Dog {
     const wet = this.wet;
     if (Math.abs(wet - (this._wetShown ?? -1)) > 0.01) {
       this._wetShown = wet;
-      rig.setWet(wet);
+      const k = lerp(1, 0.66, wet);
+      rig.mats.fur.color.setRGB(k, k, k * lerp(1, 1.04, wet));
+      rig.mats.fur.roughness = lerp(0.86, 0.45, wet);
     }
 
     // root

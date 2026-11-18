@@ -1,12 +1,11 @@
 /**
- * Dog breeds: proportions (metres, before `scale`), coat length and pattern, and voice.
+ * Dog breeds: proportions (metres, before `scale`), coat pattern and voice.
  * The rig builder in dogRig.js turns one of these into a dog.
  */
 export const BREEDS = {
   shiba: {
     id: 'shiba', name: 'Shiba Inu', blurb: 'Bright-eyed, fox-faced and a little bit stubborn.',
     scale: 1.0,
-    fur: 0.016, // longest fur, metres
     body: { len: 0.5, r: 0.125, chest: 1.1, hips: 0.94, tuck: 0.8 },
     leg: { len: 0.27, r: 0.04 },
     neck: { len: 0.12, r: 0.082, angle: 0.8 },
@@ -20,7 +19,6 @@ export const BREEDS = {
   golden: {
     id: 'golden', name: 'Golden Retriever', blurb: 'Loves everyone. Loves water even more.',
     scale: 1.24,
-    fur: 0.026, // longest fur, metres
     body: { len: 0.56, r: 0.135, chest: 1.12, hips: 0.95, tuck: 0.84 },
     leg: { len: 0.3, r: 0.043 },
     neck: { len: 0.13, r: 0.09, angle: 0.82 },
@@ -34,7 +32,6 @@ export const BREEDS = {
   corgi: {
     id: 'corgi', name: 'Corgi', blurb: 'Short legs, big ears, bigger opinions.',
     scale: 0.98,
-    fur: 0.016, // longest fur, metres
     body: { len: 0.58, r: 0.132, chest: 1.06, hips: 1.02, tuck: 0.95 },
     leg: { len: 0.15, r: 0.04 },
     neck: { len: 0.1, r: 0.085, angle: 0.72 },
@@ -48,7 +45,6 @@ export const BREEDS = {
   dalmatian: {
     id: 'dalmatian', name: 'Dalmatian', blurb: 'One hundred and one percent energy.',
     scale: 1.2,
-    fur: 0.005, // longest fur, metres
     body: { len: 0.56, r: 0.12, chest: 1.14, hips: 0.9, tuck: 0.7 },
     leg: { len: 0.33, r: 0.036 },
     neck: { len: 0.15, r: 0.072, angle: 0.74 },
@@ -62,7 +58,6 @@ export const BREEDS = {
   husky: {
     id: 'husky', name: 'Husky', blurb: 'Talkative. Dramatic. Sings at the moon.',
     scale: 1.2,
-    fur: 0.022, // longest fur, metres
     body: { len: 0.55, r: 0.134, chest: 1.1, hips: 0.95, tuck: 0.82 },
     leg: { len: 0.3, r: 0.042 },
     neck: { len: 0.13, r: 0.092, angle: 0.8 },
@@ -76,7 +71,6 @@ export const BREEDS = {
   pug: {
     id: 'pug', name: 'Pug', blurb: 'Snores while awake. Professional napper.',
     scale: 0.82,
-    fur: 0.005, // longest fur, metres
     body: { len: 0.44, r: 0.14, chest: 1.08, hips: 1.0, tuck: 0.96 },
     leg: { len: 0.2, r: 0.042 },
     neck: { len: 0.07, r: 0.1, angle: 0.7 },
@@ -90,7 +84,6 @@ export const BREEDS = {
   dachshund: {
     id: 'dachshund', name: 'Dachshund', blurb: 'Half a dog tall, a dog and a half long.',
     scale: 0.86,
-    fur: 0.006, // longest fur, metres
     body: { len: 0.66, r: 0.108, chest: 1.1, hips: 0.95, tuck: 0.9 },
     leg: { len: 0.125, r: 0.036 },
     neck: { len: 0.11, r: 0.07, angle: 0.72 },
@@ -104,7 +97,6 @@ export const BREEDS = {
   samoyed: {
     id: 'samoyed', name: 'Samoyed', blurb: 'A cloud with a smile.',
     scale: 1.1,
-    fur: 0.034, // longest fur, metres
     body: { len: 0.52, r: 0.152, chest: 1.1, hips: 1.0, tuck: 0.95 },
     leg: { len: 0.27, r: 0.05 },
     neck: { len: 0.11, r: 0.115, angle: 0.8 },
@@ -118,7 +110,6 @@ export const BREEDS = {
   blacklab: {
     id: 'blacklab', name: 'Black Labrador', blurb: 'Will fetch until the sun goes down. Then some more.',
     scale: 1.22,
-    fur: 0.008, // longest fur, metres
     body: { len: 0.56, r: 0.136, chest: 1.12, hips: 0.96, tuck: 0.84 },
     leg: { len: 0.3, r: 0.044 },
     neck: { len: 0.13, r: 0.09, angle: 0.8 },
