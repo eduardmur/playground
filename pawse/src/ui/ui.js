@@ -105,6 +105,13 @@ export class UI {
     el.classList.toggle('on', !!label);
   }
 
+  /** Light the Shift hint while you run. */
+  setRunning(on) {
+    if (on === this.running) return;
+    this.running = on;
+    $('runKey').classList.toggle('on', on);
+  }
+
   flashKey(code) {
     const b = document.querySelector(`#tricks button[data-key="${code}"]`);
     if (!b) return;

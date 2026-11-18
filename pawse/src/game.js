@@ -497,6 +497,7 @@ export class Game {
     });
 
     this.ui.setPrompt(this.player.ctx && !this.ui.panel ? this.player.ctx.label : null);
+    this.ui.setRunning(inp.enabled && inp.run);
     this.ui.setTime(this.sky.phase().name, this.sky.night, this.sky.paused);
 
     this.renderer.toneMappingExposure = this.sky.cur.exposure;

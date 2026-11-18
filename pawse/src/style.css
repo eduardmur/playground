@@ -513,7 +513,8 @@ kbd {
   -webkit-backdrop-filter: blur(14px);
   max-width: calc(100vw - 32px);
 }
-#tricks button {
+#tricks button,
+#tricks .hold {
   flex: none;
   display: inline-flex;
   align-items: center;
@@ -531,11 +532,17 @@ kbd {
   background: var(--accent);
   color: var(--foreground);
 }
-#tricks button.hit {
+#tricks .hold {
+  cursor: default;
+}
+/* lit while you hold Shift */
+#tricks button.hit,
+#tricks .hold.on {
   background: var(--primary);
   color: var(--primary-foreground);
 }
-#tricks button.hit kbd {
+#tricks button.hit kbd,
+#tricks .hold.on kbd {
   background: rgba(0, 0, 0, 0.1);
   color: var(--primary-foreground);
 }
@@ -648,8 +655,10 @@ body.touch #tricks {
 }
 body.touch #tricks kbd,
 body.touch #prompt kbd,
-body.touch #title .keys {
-  display: none;
+body.touch #title .keys,
+body.touch #tricks .hold,
+body.touch #tricks .sep.run {
+  display: none; /* on a phone you run by pushing the stick further */
 }
 body.touch #tricks button {
   padding: 0 11px;
