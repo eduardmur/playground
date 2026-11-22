@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#0a0a0a" />
+    <title>train</title>
+    <meta name="description" content="A quiet ride in a window seat through high mountains." />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%230a0a0a'/><rect x='14' y='18' width='36' height='24' rx='5' fill='none' stroke='%23fafafa' stroke-width='3.5'/><path d='M14 34l10-9 8 7 6-5 12 9' fill='none' stroke='%23fafafa' stroke-width='3.5' stroke-linejoin='round'/><path d='M22 50h20' stroke='%23fafafa' stroke-width='3.5' stroke-linecap='round'/></svg>" />
+  </head>
+  <body>
+    <canvas id="scene" aria-label="The view from a window seat of a train in the mountains"></canvas>
+
+    <main id="ui">
+      <div id="bar" class="bar" role="toolbar" aria-label="Controls">
+        <button id="viewBtn" class="btn icon" data-tip="Window view" data-key="F" aria-label="Window view"><i data-lucide="binoculars"></i></button>
+        <span class="rule"></span>
+        <button id="timeBtn" class="btn" aria-haspopup="dialog" aria-expanded="false" data-tip="Time of day" data-key="T"><span id="timeIcon" class="ico"></span><span id="clock" class="num">17:12</span></button>
+        <button id="timerBtn" class="btn" aria-haspopup="dialog" aria-expanded="false" data-tip="Timer" data-key="P"><i data-lucide="timer"></i><span id="timerText" class="num">25:00</span></button>
+        <button id="radioBtn" class="btn" aria-haspopup="dialog" aria-expanded="false" data-tip="Radio" data-key="R"><i data-lucide="radio"></i><span id="radioText">Radio</span></button>
+        <button id="soundBtn" class="btn icon" aria-haspopup="dialog" aria-expanded="false" data-tip="Sound" data-key="M" aria-label="Sound"><span id="soundIcon" class="ico"></span></button>
+        <button id="fullBtn" class="btn icon" data-tip="Fullscreen" data-key="⇧F" aria-label="Fullscreen"><span id="fullIcon" class="ico"></span></button>
+      </div>
+
+      <!-- time of day -->
+      <div id="timePop" class="pop" role="dialog" aria-label="Time of day" hidden>
+        <div class="field">
+          <div class="label"><span id="phaseName">Golden hour</span><span id="timeLabel" class="value">17:12</span></div>
+          <input id="timeSlider" class="slider" type="range" min="0" max="24" step="0.02" aria-label="Time of day" />
+          <div id="timeChips" class="presets"></div>
+        </div>
+        <div class="sep"></div>
+        <div class="rowline">
+          <div class="grow"><div class="title">Let the day pass</div><div class="desc">A whole day every three hours</div></div>
+          <button id="driftBtn" class="switch" role="switch" aria-checked="false" aria-label="Let the day pass"><span></span></button>
+        </div>
+      </div>
+
+      <!-- timer -->
+      <div id="timerPop" class="pop" role="dialog" aria-label="Timer" hidden>
+        <div class="clockface">
+          <div id="timerBig" class="big num">25:00</div>
+          <div id="timerPhase" class="desc">Focus · 1 of 4</div>
+        </div>
+        <div class="rowline center">
+          <button id="timerReset" class="btn icon ghost" title="Start over" aria-label="Start over"><i data-lucide="rotate-ccw"></i></button>
+          <button id="timerGo" class="btn primary" title="Space"><span id="timerGoIcon" class="ico"></span><span id="timerGoText">Start</span></button>
+          <button id="timerSkip" class="btn icon ghost" title="Skip to the next" aria-label="Skip to the next"><i data-lucide="skip-forward"></i></button>
+        </div>
+        <div class="sep"></div>
+        <div id="lengths" class="lengths"></div>
+      </div>
+
+      <!-- radio -->
+      <div id="radioPop" class="pop" role="dialog" aria-label="Radio" hidden>
+        <div class="rowline">
+          <div class="grow"><div class="title">Radio</div><div id="trackLine" class="desc">Off</div></div>
+          <button id="nextBtn" class="btn icon ghost" title="Next track" aria-label="Next track"><i data-lucide="skip-forward"></i></button>
+          <button id="radioSwitch" class="switch" role="switch" aria-checked="true" aria-label="Radio" title="R"><span></span></button>
+        </div>
+        <div id="stationTabs" class="tabs" role="group" aria-label="Station"></div>
+      </div>
+
+      <!-- sound -->
+      <div id="soundPop" class="pop" role="dialog" aria-label="Sound" hidden>
+        <div class="field">
+          <div class="label"><span><i data-lucide="radio"></i>Radio</span><span id="volRadioValue" class="value"></span></div>
+          <input id="volRadio" class="slider" type="range" min="0" max="1" step="0.01" aria-label="Radio volume" />
+        </div>
+        <div class="field">
+          <div class="label"><span><i data-lucide="train-front"></i>Train</span><span id="volTrainValue" class="value"></span></div>
+          <input id="volTrain" class="slider" type="range" min="0" max="1" step="0.01" aria-label="Train volume" />
+        </div>
+        <div class="sep"></div>
+        <div class="rowline">
+          <div class="grow"><div class="title">Mute</div></div>
+          <button id="muteBtn" class="switch" role="switch" aria-checked="false" aria-label="Mute" title="M"><span></span></button>
+        </div>
+      </div>
+
+      <div id="hint"><kbd>Esc</kbd> back to your seat</div>
+    </main>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

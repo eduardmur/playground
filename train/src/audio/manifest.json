@@ -1,0 +1,36 @@
+{
+  "sfx": [
+    { "id": "cabin_loop", "loop": true, "seconds": 30, "level": -31, "prompt": "Inside a modern passenger train carriage travelling at steady cruising speed. Constant deep rolling rumble, gentle rhythmic clatter of wheels over rail joints, smooth air-conditioning hum, an occasional soft interior creak. Even, calm, continuous interior ambience." },
+    { "id": "tunnel_loop", "loop": true, "seconds": 22, "level": -26, "prompt": "Inside a passenger train carriage travelling through a long tunnel. Loud deep booming roar with dense reverberation, rushing air pressure, wheel clatter echoing off concrete walls. Continuous and steady." },
+    { "id": "bridge_loop", "loop": true, "seconds": 22, "level": -29, "prompt": "Inside a passenger train carriage crossing a long steel viaduct. Hollow metallic resonance under the wheels, open airy tone, crisp rhythmic clacking. Continuous and steady." },
+    { "id": "window_wind", "loop": true, "seconds": 22, "level": -33, "prompt": "Steady airflow rushing against a train window at speed. Smooth broadband wind hiss with slow gentle swells. Continuous." },
+    { "id": "tunnel_enter", "loop": false, "seconds": 3, "level": -22, "prompt": "A sudden muffled whoosh and a soft pressure thump as a train enters a tunnel, heard from inside the carriage." },
+    { "id": "tunnel_exit", "loop": false, "seconds": 3, "level": -23, "prompt": "A quick release of air pressure and a whoosh opening into wide outdoor space as a train leaves a tunnel, heard from inside the carriage." },
+    { "id": "horn_far", "loop": false, "seconds": 6, "level": -30, "prompt": "A distant two-tone train horn echoing across a wide mountain valley, with a long natural reverb tail." },
+    { "id": "timer_focus_end", "loop": false, "seconds": 4, "level": -20, "prompt": "A warm two-note chime played on a small brass bell: a gentle attack and a long clean ringing decay." },
+    { "id": "timer_break_end", "loop": false, "seconds": 3, "level": -21, "prompt": "A single low chime note from a small brass bell, warm and round, with a long gentle decay." },
+    { "id": "radio_tune", "loop": false, "seconds": 1.5, "level": -27, "prompt": "Brief analog radio tuning: a short burst of static with a quick frequency sweep." }
+  ],
+  "stations": [
+    { "id": "morning", "name": "Morning", "tracks": [
+      { "id": "morning_first_light", "title": "First Light", "seconds": 170, "prompt": "Warm lo-fi hip hop instrumental, 72 BPM. Mellow Rhodes electric piano chords, soft nylon guitar plucks, dusty brushed drums with a lazy swing, round sub bass, light tape hiss. Hopeful early-morning mood, first sunlight on mountain peaks. Steady and unobtrusive, soft fade-in and fade-out. Instrumental only." },
+      { "id": "morning_window_seat", "title": "Window Seat", "seconds": 170, "prompt": "Gentle lo-fi instrumental, 76 BPM. Fingerpicked acoustic guitar, warm upright piano, soft shaker and brushed snare, mellow bass, a little tape warble. A bright, unhurried morning on a train through green valleys. Steady and unobtrusive, soft fade-in and fade-out. Instrumental only." },
+      { "id": "morning_coffee_steam", "title": "Coffee Steam", "seconds": 170, "prompt": "Soft lo-fi jazzhop instrumental, 74 BPM. Wurlitzer chords, a muted trumpet melody far back in the mix, light swung drums with rim clicks, warm bass, gentle vinyl warmth. Calm and optimistic, a slow breakfast with a view. Steady and unobtrusive, soft fade-in and fade-out. Instrumental only." }
+    ] },
+    { "id": "focus", "name": "Focus", "tracks": [
+      { "id": "focus_steady_rails", "title": "Steady Rails", "seconds": 175, "prompt": "Minimal lo-fi study beat, 80 BPM. Steady soft boom-bap drums, muted jazz guitar, a simple felt piano motif, warm analog bass, gentle tape wobble. Even and unobtrusive, made for long concentration, the same calm energy from start to end. Soft fade-in and fade-out. Instrumental only." },
+      { "id": "focus_quiet_carriage", "title": "Quiet Carriage", "seconds": 175, "prompt": "Understated lo-fi beat for deep work, 84 BPM. Soft sidechained electric piano pads, a quiet plucked synth pattern, tight dusty drums, smooth sine bass, faint tape hiss. Repetitive in a good way, steady and neutral, the same calm energy from start to end. Soft fade-in and fade-out. Instrumental only." },
+      { "id": "focus_paper_and_pencil", "title": "Paper and Pencil", "seconds": 175, "prompt": "Mellow lo-fi hip hop instrumental for studying, 78 BPM. Warm vibraphone notes, soft upright piano chords, relaxed drums with a brushed snare, deep round bass, light vinyl crackle. Patient and even, made for reading and writing, the same calm energy from start to end. Soft fade-in and fade-out. Instrumental only." }
+    ] },
+    { "id": "dusk", "name": "Dusk", "tracks": [
+      { "id": "dusk_golden_hour", "title": "Golden Hour", "seconds": 175, "prompt": "Jazzy lo-fi instrumental, 68 BPM. Smoky tenor saxophone phrases far back in the mix, upright bass, soft Rhodes chords, vinyl-warm drums with rimshots. Golden-hour nostalgia, slow and wide, low sun over a mountain lake. Steady and unobtrusive, soft fade-in and fade-out. Instrumental only." },
+      { "id": "dusk_last_light", "title": "Last Light", "seconds": 175, "prompt": "Wistful lo-fi instrumental, 70 BPM. Clean electric guitar with slow tremolo, warm tape-saturated piano, laid-back drums, mellow bass, a soft string pad underneath. The last light leaving the valley, tender and unhurried. Steady and unobtrusive, soft fade-in and fade-out. Instrumental only." },
+      { "id": "dusk_slow_viaduct", "title": "Slow Viaduct", "seconds": 175, "prompt": "Soulful lo-fi instrumental, 66 BPM. Dusty electric piano with gentle chorus, a muted flugelhorn melody, brushed drums, deep upright bass, warm vinyl texture. Evening calm on a slow train crossing a high viaduct. Steady and unobtrusive, soft fade-in and fade-out. Instrumental only." }
+    ] },
+    { "id": "night", "name": "Night", "tracks": [
+      { "id": "night_night_train", "title": "Night Train", "seconds": 180, "prompt": "Ambient lo-fi instrumental, 60 BPM. Slow felt piano with long reverb, deep soft pads, a very sparse muted kick and rim, a distant analog synth shimmer, low tape hiss. A night train through sleeping mountains, calm and spacious. Steady and unobtrusive, soft fade-in and fade-out. Instrumental only." },
+      { "id": "night_sleeping_valley", "title": "Sleeping Valley", "seconds": 180, "prompt": "Dreamy lo-fi instrumental, 62 BPM. Warm electric piano with slow tremolo, soft sustained synth pads, a quiet brushed beat, round sub bass, gentle tape flutter. Lights of a far village passing in the dark, peaceful and sleepy. Steady and unobtrusive, soft fade-in and fade-out. Instrumental only." },
+      { "id": "night_moon_on_glass", "title": "Moon on Glass", "seconds": 180, "prompt": "Nocturnal lo-fi instrumental, 58 BPM. Soft clean guitar harmonics, a slow celesta-like bell melody, airy pads, a minimal heartbeat kick, warm low bass, faint vinyl hush. Moonlight on a train window, still and weightless. Steady and unobtrusive, soft fade-in and fade-out. Instrumental only." }
+    ] }
+  ]
+}
