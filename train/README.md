@@ -1,4 +1,4 @@
-# train
+# Pomodoro train
 
 A quiet ride in a window seat through high mountains. There is no goal: the train is already moving when the page opens, and it goes on for as long as you like. A place to work, or to do nothing.
 
@@ -10,7 +10,6 @@ A quiet ride in a window seat through high mountains. There is no goal: the trai
 | --- | --- |
 | ![Leaning to the window at noon](screenshots/2-window.jpg) | ![Dawn: first light on the summit](screenshots/3-dawn.jpg) |
 | ![Night: the lamps mirrored in the glass, stars over the ridge](screenshots/4-night.jpg) | ![Dusk over the lake](screenshots/5-dusk.jpg) |
-| ![The carriage by day](screenshots/6-cabin.jpg) | |
 
 ## What you can do
 

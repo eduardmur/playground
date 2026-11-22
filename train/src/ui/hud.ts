@@ -245,7 +245,7 @@ export class Hud {
       host.replaceChildren(icon(t.running ? Pause : Play));
     }
     $('timerBtn').classList.toggle('off', !t.running);
-    document.title = t.running ? `${t.text} · ${t.label} · train` : 'train';
+    document.title = t.running ? `${t.text} · ${t.label} · Pomodoro train` : 'Pomodoro train';
   }
 
   private paintRadio() {
