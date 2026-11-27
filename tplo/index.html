@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark light" />
+    <title>Tibial Plateau Leveling Osteotomy (TPLO)</title>
+    <meta name="description" content="How a tibial plateau leveling osteotomy is done, step by step: an interactive 3D stifle, the forces, the planning and the cut." />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%230a0a0a'/><path d='M14 26l36-8' stroke='%23fafafa' stroke-width='4' stroke-linecap='round'/><path d='M17 37a18 18 0 0 0 31-7' fill='none' stroke='%23e5533d' stroke-width='4' stroke-linecap='round'/><path d='M32 44v8' stroke='%23fafafa' stroke-width='4' stroke-linecap='round'/></svg>" />
+    <script>
+      // set the theme before anything is painted
+      (() => {
+        let t = null;
+        try { t = localStorage.getItem('tplo.theme'); } catch {}
+        document.documentElement.dataset.theme = t || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="app">
+      <header class="top">
+        <div class="brand">
+          <h1>Tibial Plateau Leveling Osteotomy</h1>
+          <span class="badge">TPLO</span>
+        </div>
+        <nav class="tools" aria-label="View options">
+          <div class="seg" id="modeSeg" role="group" aria-label="Rendering">
+            <button data-mode="solid">Solid</button>
+            <button data-mode="xray">X-ray</button>
+          </div>
+          <button class="btn icon" id="labelsBtn" data-tip="Labels" data-key="L" aria-label="Labels" aria-pressed="true"><i data-lucide="tag"></i></button>
+          <button class="btn icon" id="themeBtn" data-tip="Theme" data-key="T" aria-label="Switch between light and dark"></button>
+          <button class="btn icon" id="aboutBtn" data-tip="About" aria-label="About and sources"><i data-lucide="info"></i></button>
+        </nav>
+      </header>
+
+      <main>
+        <section class="view" id="view" aria-label="3D model of the stifle">
+          <canvas id="scene"></canvas>
+          <svg id="overlay" aria-hidden="true"></svg>
+          <div class="view-foot">
+            <div class="seg small" id="viewSeg" role="group" aria-label="Look from">
+              <button data-view="medial">Medial</button>
+              <button data-view="cranial">Cranial</button>
+              <button data-view="lateral">Lateral</button>
+              <button data-view="caudal">Caudal</button>
+            </div>
+            <span class="hint">Drag to turn · scroll to zoom</span>
+          </div>
+          <div class="loading" id="loading">Loading the model</div>
+        </section>
+        <aside class="panel" id="panel"></aside>
+      </main>
+
+      <footer class="transport">
+        <div class="keys">
+          <button class="btn icon" id="prevBtn" data-tip="Previous step" data-key="←" aria-label="Previous step"><i data-lucide="chevron-left"></i></button>
+          <button class="btn icon solid" id="playBtn" data-tip="Play" data-key="Space" aria-label="Play or pause"></button>
+          <button class="btn icon" id="nextBtn" data-tip="Next step" data-key="→" aria-label="Next step"><i data-lucide="chevron-right"></i></button>
+        </div>
+        <ol class="track" id="track" aria-label="Steps"></ol>
+      </footer>
+    </div>
+
+    <dialog id="about" aria-labelledby="aboutTitle">
+      <div class="dialog-head">
+        <h2 id="aboutTitle">About this model</h2>
+        <button class="btn icon" id="aboutClose" aria-label="Close"><i data-lucide="x"></i></button>
+      </div>
+      <p>A walkthrough of the tibial plateau leveling osteotomy, one of the operations most often used for a ruptured cranial cruciate ligament in dogs. It was first described by Barclay Slocum in 1993.</p>
+      <p>The stifle is a stylised model, not a scan: a right limb of a dog of about 30 kg with a plateau angle of 26°, cut with a 24 mm blade and turned 21°. It explains the idea and the order of the steps. It is not a surgical guide and not veterinary advice.</p>
+      <h3>Words</h3>
+      <dl class="keys-list words">
+        <div><dt>Stifle</dt><dd>The knee of the hind limb</dd></div>
+        <div><dt>Hock</dt><dd>The ankle</dd></div>
+        <div><dt>Cranial</dt><dd>Towards the front of the limb</dd></div>
+        <div><dt>Caudal</dt><dd>Towards the back of the limb</dd></div>
+        <div><dt>Medial</dt><dd>The inner side</dd></div>
+        <div><dt>Lateral</dt><dd>The outer side</dd></div>
+      </dl>
+      <h3>Keys</h3>
+      <dl class="keys-list">
+        <div><dt><kbd>←</kbd><kbd>→</kbd></dt><dd>Previous and next step</dd></div>
+        <div><dt><kbd>Space</kbd></dt><dd>Play or pause</dd></div>
+        <div><dt><kbd>1</kbd>–<kbd>8</kbd></dt><dd>Go to a step</dd></div>
+        <div><dt><kbd>X</kbd></dt><dd>Solid or X-ray</dd></div>
+        <div><dt><kbd>L</kbd></dt><dd>Labels</dd></div>
+        <div><dt><kbd>T</kbd></dt><dd>Light or dark</dd></div>
+      </dl>
+      <h3>Sources</h3>
+      <ol class="sources">
+        <li>Slocum B, Slocum TD. Tibial plateau leveling osteotomy for repair of cranial cruciate ligament rupture in the canine. <i>Vet Clin North Am Small Anim Pract</i> 1993;23:777–795.</li>
+        <li>Warzee CC, Dejardin LM, Arnoczky SP, Perry RL. Effect of tibial plateau leveling on cranial and caudal tibial thrusts in canine cranial cruciate-deficient stifles. <i>Vet Surg</i> 2001;30:278–286.</li>
+        <li>Ralphs SC, Whitney WO. Arthroscopic evaluation of menisci in dogs with cranial cruciate ligament injuries: 100 cases. <i>J Am Vet Med Assoc</i> 2002;221:1601–1604. <a href="https://pubmed.ncbi.nlm.nih.gov/12479333/" target="_blank" rel="noopener">PubMed</a></li>
+        <li>Bergh MS, Peirone B. Complications of tibial plateau levelling osteotomy in dogs. <i>Vet Comp Orthop Traumatol</i> 2012;25:349–358. <a href="https://pubmed.ncbi.nlm.nih.gov/22534675/" target="_blank" rel="noopener">PubMed</a></li>
+        <li>Coletti TJ, Anderson M, Gorse MJ, Madsen R. Complications associated with tibial plateau leveling osteotomy: a retrospective of 1519 procedures. <i>Can Vet J</i> 2014;55:249–254. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3923481" target="_blank" rel="noopener">Full text</a></li>
+        <li>Gatineau M, Dupuis J, Planté J, Moreau M. Retrospective study of 476 tibial plateau levelling osteotomy procedures. <i>Vet Comp Orthop Traumatol</i> 2011;24:333–341. <a href="https://www.thieme-connect.de/products/ejournals/abstract/10.3415/VCOT-10-07-0109" target="_blank" rel="noopener">Abstract</a></li>
+        <li>Christopher SA, Beetem J, Cook JL. Comparison of long-term outcomes associated with three surgical techniques for treatment of cranial cruciate ligament disease in dogs. <i>Vet Surg</i> 2013;42:329–334. <a href="https://pubmed.ncbi.nlm.nih.gov/23432511/" target="_blank" rel="noopener">PubMed</a></li>
+      </ol>
+    </dialog>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
