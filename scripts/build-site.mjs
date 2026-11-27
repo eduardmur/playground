@@ -9,7 +9,7 @@
 // A cover image is taken from <project>/cover.(jpg|png|webp), or else the first file
 // (by name) in <project>/screenshots/.
 // Optional metadata lives in the project's package.json under "playground":
-//   { "title": "Pawse", "tags": ["game"], "date": "2026-11-12" }
+//   { "title": "My Idea", "tags": ["game"], "date": "2026-12-01" }
 // The result goes to _site/, with an index page that lists every experiment.
 import { execSync } from 'node:child_process';
 import { cp, mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
