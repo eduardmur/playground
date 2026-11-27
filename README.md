@@ -4,9 +4,9 @@ Small experiments: games, toys and prototypes. Each folder is a separate project
 
 | | Project | Links |
 | --- | --- | --- |
-| <a href="https://eduardmur.github.io/playground/pawse/"><img src="pawse/screenshots/1-sunset.jpg" width="280" alt="Pawse: two dogs at the pond at sunset"></a> | **Pawse**<br>A meditative 3D game: you are a dog in a park. Three.js. | [Play](https://eduardmur.github.io/playground/pawse/) · [Code](pawse/) |
-| <a href="https://eduardmur.github.io/playground/robotaxi/"><img src="robotaxi/screenshots/1-golden-hour.jpg" width="280" alt="Robotaxi: the view from inside a driverless cab, heading into a low sun"></a> | **Robotaxi**<br>A lofi shift in a driverless cab in a city of robots: ride along as it picks robots up, and change the sky. Three.js. | [Play](https://eduardmur.github.io/playground/robotaxi/) · [Code](robotaxi/) |
 | <a href="https://eduardmur.github.io/playground/train/"><img src="train/screenshots/1-morning.jpg" width="280" alt="Pomodoro train: the view from a window seat, a lake and a snow peak on a clear morning"></a> | **Pomodoro train**<br>A quiet ride in a window seat through high mountains, with a pomodoro timer and lo-fi radio. Three.js. | [Play](https://eduardmur.github.io/playground/train/) · [Code](train/) |
+| <a href="https://eduardmur.github.io/playground/robotaxi/"><img src="robotaxi/screenshots/1-golden-hour.jpg" width="280" alt="Robotaxi: the view from inside a driverless cab, heading into a low sun"></a> | **Robotaxi**<br>A lofi shift in a driverless cab in a city of robots: ride along as it picks robots up, and change the sky. Three.js. | [Play](https://eduardmur.github.io/playground/robotaxi/) · [Code](robotaxi/) |
+| <a href="https://eduardmur.github.io/playground/pawse/"><img src="pawse/screenshots/1-sunset.jpg" width="280" alt="Pawse: two dogs at the pond at sunset"></a> | **Pawse**<br>A meditative 3D game: you are a dog in a park. Three.js. | [Play](https://eduardmur.github.io/playground/pawse/) · [Code](pawse/) |
 
 ## Adding an experiment
 
